@@ -43,6 +43,8 @@
   --color-status-abgeschlossen-bg: #e8f4ec;
 
   /* color · feedback */
+  --color-feedback-fehler-fg: #b0172a;
+  --color-feedback-fehler-bg: #fcebec;
   --color-feedback-erfolg-fg: #1e7a46;
   --color-feedback-erfolg-bg: #e8f4ec;
 
@@ -88,18 +90,23 @@
   --size-control-height: 48px;
   --size-app-bar-height: 56px;
   --size-bottom-nav-height: 64px;
+  --size-mascot: 160px;
+  --size-trade-thumbnail: 56px;
   --size-screen-width: 390px;
 
   /* typography (Figma text styles) */
+  --font-size-caption: 12px;
+  --font-line-height-caption: 16px;
   --font-display: 'Sora', system-ui, sans-serif;
   --font-body: 'Inter', system-ui, sans-serif;
 }
 
 /* Text styles – use as className, e.g. <h1 className="text-h1"> */
 .text-h1      { font: 600 28px/36px var(--font-display); letter-spacing: -0.5px; }
+.text-h2      { font: 600 20px/28px var(--font-body); letter-spacing: -0.2px; }
 .text-h3      { font: 600 16px/24px var(--font-body); }
 .text-body    { font: 400 16px/24px var(--font-body); }
 .text-body-strong { font: 600 16px/24px var(--font-body); }
 .text-label   { font: 500 14px/20px var(--font-body); }
-.text-caption { font: 400 12px/16px var(--font-body); letter-spacing: 0.1px; }
+.text-caption { font: 400 var(--font-size-caption)/var(--font-line-height-caption) var(--font-body); letter-spacing: 0.1px; }
 .text-numeric { font: 600 20px/24px var(--font-body); letter-spacing: -0.2px; font-variant-numeric: tabular-nums; }
