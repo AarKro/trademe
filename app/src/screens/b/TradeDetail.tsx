@@ -1,4 +1,4 @@
-import { Calendar, CircleCheck, Clock, Image as ImageIcon, ShieldQuestion, Star } from 'lucide-react'
+import { Calendar, CircleCheck, Image as ImageIcon, ShieldQuestion, Star } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AppBar } from '../../components/AppBar'
@@ -8,6 +8,7 @@ import { useAuth } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
 import type { Offer, Profile, Trade } from '../../lib/types'
 import loopi from './assets/loopi.svg'
+import { TradeProgress } from './TradeProgress'
 import './TradeDetail.css'
 
 type OpenOffer = Pick<Offer, 'id' | 'helper_id' | 'price_chf' | 'proposed_at' | 'message'> & {
@@ -20,7 +21,6 @@ const currency = new Intl.NumberFormat('de-CH', { maximumFractionDigits: 2 })
 const date = new Intl.DateTimeFormat('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit' })
 const time = new Intl.DateTimeFormat('de-CH', { hour: '2-digit', minute: '2-digit' })
 const ratingNumber = new Intl.NumberFormat('de', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
-const steps = ['Angebot', 'Zahlung', 'Ausführung', 'Freigabe', 'Bewertung']
 
 async function loadDetail(tradeId: string, userId: string, signal: AbortSignal): Promise<Detail | null> {
   const { data: trade, error } = await supabase.from('trades').select('*')
@@ -129,16 +129,7 @@ function WaitingForOffers({ trade }: { trade: Trade }) {
           <p className="text-caption text-secondary">{details}</p>
         </div>
       </div>
-      <div className="trade-detail__timeline">
-        <ol aria-label="Fortschritt">
-          {steps.map((step, index) => (
-            <li key={step} className="text-caption" aria-current={index === 0 ? 'step' : undefined}>
-              <span aria-hidden />{step}
-            </li>
-          ))}
-        </ol>
-        <p className="text-label"><Clock aria-hidden />Angebote kommen meist innert 24 h</p>
-      </div>
+      <TradeProgress active={0} hint="Angebote kommen meist innert 24 h" />
       <div className="trade-detail__waiting">
         <img src={loopi} alt="" width="160" height="160" />
         <h2 className="text-h2">Noch keine Angebote</h2>

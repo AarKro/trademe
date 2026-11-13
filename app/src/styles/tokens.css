@@ -24,6 +24,8 @@
   --color-surface-muted: #efede8;
   --color-surface-accent-subtle: #f8f2f7;
 
+  --color-overlay-scrim: rgb(13 27 40 / 40%);
+
   /* color · border */
   --color-border-subtle: #e9eaec;
   --color-border-default: #d3d6d8;

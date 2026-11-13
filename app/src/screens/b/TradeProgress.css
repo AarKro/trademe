@@ -1,0 +1,65 @@
+.trade-detail__timeline {
+  display: grid;
+  gap: var(--space-stack-sm);
+  background: var(--color-surface-subtle);
+  padding: var(--space-inset-lg) var(--space-inset-md);
+  border-radius: var(--radius-card);
+}
+.trade-detail__timeline ol {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+.trade-detail__timeline li {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-stack-xs);
+  color: var(--color-text-tertiary);
+  position: relative;
+  overflow-wrap: anywhere;
+}
+.trade-detail__timeline li + li::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--size-icon-md) / 2 - var(--stroke-default));
+  right: 50%;
+  width: 100%;
+  height: var(--stroke-strong);
+  background: var(--color-border-default);
+}
+.trade-detail__timeline li span {
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: var(--size-icon-md);
+  height: var(--size-icon-md);
+  border-radius: var(--radius-badge);
+  background: var(--color-surface-default);
+  border: var(--stroke-strong) solid var(--color-border-default);
+}
+.trade-detail__timeline li[aria-current] { color: var(--color-text-accent); }
+.trade-detail__timeline li[aria-current] span { border-color: var(--color-action-primary); }
+.trade-detail__timeline li[aria-current] span::after {
+  content: '';
+  width: var(--space-inset-sm);
+  height: var(--space-inset-sm);
+  border-radius: var(--radius-badge);
+  background: var(--color-action-primary);
+}
+.trade-detail__timeline p { gap: var(--space-inline-sm); }
+.trade-detail__timeline p svg { color: var(--color-icon-accent); }
+
+.trade-detail__timeline li[data-complete='true'] { color: var(--color-text-primary); }
+.trade-detail__timeline li[data-complete='true'] span {
+  background: var(--color-action-primary);
+  border-color: var(--color-action-primary);
+  color: var(--color-text-on-accent);
+}
+.trade-detail__timeline li[data-complete='true']::before,
+.trade-detail__timeline li[aria-current]::before { background: var(--color-action-primary); }
+.trade-detail__timeline svg { width: var(--size-icon-sm); height: var(--size-icon-sm); }
+.trade-detail__timeline p { display: flex; align-items: center; }
+.trade-detail__timeline p svg { flex: none; }
