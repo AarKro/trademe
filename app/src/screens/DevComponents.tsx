@@ -8,6 +8,7 @@ import { Rating, RatingSummary } from '../components/Rating'
 import { StatusTimeline } from '../components/StatusTimeline'
 import { SummaryCard } from '../components/SummaryCard'
 import { Toast } from '../components/Toast'
+import { Zustand } from '../components/Zustand'
 import './DevComponents.css'
 
 // /dev/components – every shared component with example data (Figma: Design System › A/08 Patterns).
@@ -91,6 +92,12 @@ export function DevComponents() {
           {([1, 2, 3, 4, 5] as const).map((step) => (
             <StatusTimeline key={step} step={step} deadline={step === 4 ? 'Freigabe bis 24.11. · sonst automatisch' : undefined} />
           ))}
+        </Section>
+
+        <Section title="Zustand (Erfolg · Leer · Fehler)">
+          <Zustand mascot="plaudi" title="Danke für deine Bewertung!" text="Kurzer Satz, was jetzt passiert." />
+          <Zustand mascot="pip" title="Noch keine Trades" text="Kurzer Satz, was jetzt passiert." />
+          <Zustand mascot="loopi" title="Auftrag abgeschlossen" text="Kurzer Satz, was jetzt passiert." />
         </Section>
 
         <Section title="Summary-Card">
