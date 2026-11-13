@@ -1,0 +1,163 @@
+.create-trade {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: calc(var(--size-bottom-nav-height) + env(safe-area-inset-bottom));
+}
+
+.create-trade__fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-stack-md);
+  min-inline-size: 0;
+  margin: 0;
+  padding: var(--space-inset-lg) var(--space-inset-xl) var(--space-inset-xl);
+  border: 0;
+}
+
+.create-trade__chips,
+.create-trade__row,
+.create-trade__location-options {
+  display: flex;
+  align-items: flex-start;
+}
+
+.create-trade__chips {
+  flex-wrap: wrap;
+  gap: var(--space-stack-xs);
+}
+
+.create-trade__chips button {
+  padding: var(--space-inset-sm) var(--space-inset-md);
+  border: var(--stroke-default) solid transparent;
+  border-radius: var(--radius-badge);
+  background: var(--color-surface-muted);
+  cursor: pointer;
+}
+
+.create-trade__chips button[aria-pressed='true'] {
+  border-color: var(--color-action-primary);
+  background: var(--color-surface-accent-subtle);
+  color: var(--color-text-accent);
+}
+
+.create-trade .input {
+  width: 100%;
+  min-width: 0;
+  padding-inline: var(--space-inset-lg);
+}
+
+.create-trade .input:not(:placeholder-shown):not(:disabled) {
+  border-color: var(--color-border-strong);
+}
+
+.create-trade .input[aria-invalid='true'] {
+  border: var(--stroke-strong) solid var(--color-feedback-fehler-fg);
+}
+
+.create-trade .input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.create-trade__location-options {
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-inline-sm);
+  color: var(--color-text-secondary);
+}
+
+.create-trade__location-options label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-inline-xs);
+}
+
+.create-trade__location-options a {
+  text-decoration: underline;
+}
+
+.create-trade__row {
+  gap: var(--space-stack-sm);
+}
+
+.create-trade__row .field {
+  flex: 1;
+  min-width: 0;
+}
+
+.create-trade__row input[type='datetime-local'] {
+  padding-inline: var(--space-inset-sm);
+}
+
+.create-trade__details {
+  border: var(--stroke-default) solid var(--color-border-default);
+  border-radius: var(--radius-card);
+  padding: var(--space-inset-md) var(--space-inset-lg);
+}
+
+.create-trade__details summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-stack-sm);
+  cursor: pointer;
+  list-style: none;
+}
+
+.create-trade__details summary::-webkit-details-marker { display: none; }
+
+.create-trade__details summary span span { display: block; }
+.create-trade__details summary > span { flex: 1; }
+.create-trade__details summary svg { width: var(--size-icon-md); height: var(--size-icon-md); flex-shrink: 0; color: var(--color-icon-subtle); }
+.create-trade__details summary svg:last-child { color: var(--color-icon-accent); }
+.create-trade__details[open] summary svg:last-child { rotate: 45deg; }
+.create-trade__details .field { margin-top: var(--space-stack-sm); }
+.create-trade__details textarea { height: auto; padding-block: var(--space-inset-sm); }
+.create-trade__details input[type='file'] { height: auto; padding: var(--space-inset-sm); }
+
+.create-trade__banner,
+.create-trade__error {
+  display: flex;
+  color: var(--color-feedback-fehler-fg);
+}
+
+.create-trade__banner {
+  gap: var(--space-stack-sm);
+  align-items: flex-start;
+  padding: var(--space-inset-lg);
+  border-inline-start: var(--stroke-strong) solid var(--color-feedback-fehler-fg);
+  border-radius: var(--radius-control);
+  background: var(--color-feedback-fehler-bg);
+}
+
+.create-trade__banner svg {
+  width: var(--size-icon-lg);
+  height: var(--size-icon-lg);
+  flex-shrink: 0;
+}
+
+.create-trade__banner .text-body {
+  margin-top: var(--space-stack-2xs);
+  color: var(--color-text-primary);
+}
+
+.create-trade__error {
+  align-items: center;
+  gap: var(--space-inline-xs);
+}
+
+.create-trade__error svg {
+  width: var(--size-icon-sm);
+  height: var(--size-icon-sm);
+  flex-shrink: 0;
+}
+
+.create-trade__actions {
+  position: sticky;
+  bottom: calc(var(--size-bottom-nav-height) + env(safe-area-inset-bottom));
+  padding: var(--space-inset-md) var(--space-inset-xl);
+  border-top: var(--stroke-default) solid var(--color-border-subtle);
+  background: var(--color-surface-default);
+}
+
+.create-trade__actions button { width: 100%; }
