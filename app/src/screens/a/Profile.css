@@ -207,3 +207,111 @@ button.chip {
   height: var(--size-icon-lg);
   color: var(--color-icon-accent);
 }
+
+/* --- Public profile (A/10, A/10b) ---------------------------------------- */
+.profile__rating {
+  display: flex;
+  align-items: center;
+  gap: var(--space-stack-xs);
+}
+
+.profile__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-stack-xs);
+}
+
+.profile-check {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-stack-xs);
+  padding: var(--space-inset-md);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-subtle);
+}
+
+.profile-check--verified {
+  background: var(--color-feedback-erfolg-bg);
+}
+
+.profile-check__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-stack-xs);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.profile-check__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-stack-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.profile-check__list li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-stack-xs);
+}
+
+.profile-check__list svg {
+  flex-shrink: 0;
+  width: var(--size-icon-sm);
+  height: var(--size-icon-sm);
+  color: var(--color-feedback-erfolg-fg);
+}
+
+.profile-rating-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-stack-xs);
+  padding: var(--space-inset-md) var(--space-inset-lg);
+  border: var(--stroke-default) solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-default);
+  text-align: left;
+  cursor: pointer;
+}
+
+.profile-rating-card__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-inset-2xs);
+}
+
+.profile-rating-card__author {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--space-stack-xs);
+}
+
+.profile-rating-card__author .text-label {
+  font-weight: 600;
+}
+
+.profile-rating-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-stack-md);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.profile-rating-list li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-inset-2xs);
+  padding-bottom: var(--space-stack-md);
+  border-bottom: var(--stroke-default) solid var(--color-border-subtle);
+}
