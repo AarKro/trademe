@@ -37,6 +37,8 @@
 
   /* color · action */
   --color-action-primary: #8e2d7a;
+  --color-action-disabled: #e9eaec;
+  --color-text-disabled: #81888f;
 
   /* color · status (trade_status in the database) */
   --color-status-offen-fg: #8e2d7a;
@@ -123,6 +125,7 @@
   --size-sheet-handle: 40px;
   --size-textarea: 96px;
   --size-progress-height: 6px;
+  --size-rating-input: 32px;
   --size-composer: 56px;
   --size-composer-input: 40px;
   --size-chat-bubble: 280px;
