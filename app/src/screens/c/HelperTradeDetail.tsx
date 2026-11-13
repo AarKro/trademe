@@ -38,6 +38,9 @@ function HelperTradeDetailContent({ tradeId, helperId }: { tradeId: string; help
   const [proposedAt, setProposedAt] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [ownOffer, setOwnOffer] = useState<{ id: string; price_chf: number; proposed_at: string | null } | null>(null)
+  const [payout, setPayout] = useState<number | null>(null)
+  const [reportingDone, setReportingDone] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -51,7 +54,13 @@ function HelperTradeDetailContent({ tradeId, helperId }: { tradeId: string; help
         return
       }
       setTrade(data)
+      const { data: offer } = await supabase.from('offers').select('id, price_chf, proposed_at').eq('trade_id', data.id).eq('helper_id', helperId).maybeSingle<{ id: string; price_chf: number; proposed_at: string | null }>()
+      if (active) setOwnOffer(offer)
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.client_id).maybeSingle<Profile>()
+      if (data.status === 'abgeschlossen') {
+        const { data: payment } = await supabase.from('payments').select('payout_chf').eq('trade_id', data.id).maybeSingle<{ payout_chf: number }>()
+        if (active) setPayout(payment?.payout_chf ?? null)
+      }
       if (active) {
         setClient(profile)
         setLoading(false)
@@ -59,7 +68,7 @@ function HelperTradeDetailContent({ tradeId, helperId }: { tradeId: string; help
     }
     void load()
     return () => { active = false }
-  }, [tradeId])
+  }, [helperId, tradeId])
 
   async function submitOffer(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -81,11 +90,21 @@ function HelperTradeDetailContent({ tradeId, helperId }: { tradeId: string; help
     setSubmitting(false)
   }
 
+  async function reportDone() {
+    if (!trade || reportingDone) return
+    setReportingDone(true)
+    const { error: reportError } = await supabase.rpc('report_done', { p_trade_id: trade.id })
+    if (reportError) setError('Der Abschluss konnte nicht gemeldet werden.')
+    else setTrade((current) => current ? { ...current, status: 'zur_bestaetigung', completed_reported_at: new Date().toISOString() } : current)
+    setReportingDone(false)
+  }
+
   if (loading) return <><AppBar back title="Trade" /><main className="screen helper-detail"><p className="text-body" role="status">Trade wird geladen …</p></main></>
   if (!trade) return <><AppBar back title="Trade" /><main className="screen helper-detail"><p className="text-body" role="alert">{error}</p></main></>
 
   const clientName = client?.display_name ?? 'Auftraggebende Person'
-  const canOffer = trade.status === 'offen' && !success
+  const canOffer = trade.status === 'offen' && !ownOffer && !success
+  const offerSent = trade.status === 'offen' && (ownOffer || success)
 
   return (
     <>
@@ -93,6 +112,7 @@ function HelperTradeDetailContent({ tradeId, helperId }: { tradeId: string; help
       <main className="screen helper-detail">
         {error && <p className="helper-detail__error text-caption" role="alert">{error}</p>}
         {success && <p className="helper-detail__success text-label" role="status">Dein Angebot wurde gesendet.</p>}
+        {offerSent && <div className="helper-detail__state helper-detail__state--accent"><strong className="text-label">Angebot gesendet</strong><span className="text-caption">CHF {currency.format(ownOffer?.price_chf ?? Number(price))}{(ownOffer?.proposed_at || proposedAt) ? ` · ${formatDate(ownOffer?.proposed_at ?? proposedAt)}` : ''}</span></div>}
         {trade.photo_urls[0] ? <img className="helper-detail__hero" src={trade.photo_urls[0]} alt="" /> : <div className="helper-detail__hero helper-detail__hero--empty"><ImageIcon size={32} /></div>}
         <h2 className="helper-detail__title">{trade.title}</h2>
         <div className="helper-detail__facts">
@@ -106,6 +126,9 @@ function HelperTradeDetailContent({ tradeId, helperId }: { tradeId: string; help
           <span className="helper-detail__client-copy"><strong className="text-body-strong">{clientName}</strong><span className="text-caption text-secondary">Auftraggebende Person</span></span>
           <ChevronRight size={20} aria-hidden />
         </Link>
+        {trade.status === 'vergeben' && <div className="helper-detail__state"><strong className="text-label">Auftrag erhalten</strong><span className="text-caption text-secondary">Wenn du fertig bist, kannst du den Abschluss melden.</span><Button onClick={() => void reportDone()} disabled={reportingDone}>{reportingDone ? 'Wird gemeldet …' : 'Als erledigt melden'}</Button></div>}
+        {trade.status === 'zur_bestaetigung' && <div className="helper-detail__state helper-detail__state--success"><strong className="text-label">Wartet auf Freigabe</strong><span className="text-caption">Die auftraggebende Person prüft den Abschluss. Die Auszahlung wird danach freigegeben.</span></div>}
+        {trade.status === 'abgeschlossen' && <div className="helper-detail__state helper-detail__state--success"><strong className="text-label">Abgeschlossen</strong><span className="text-caption">Auszahlung{payout !== null ? ` · CHF ${currency.format(payout)}` : ' wird angezeigt, sobald sie verfügbar ist.'}</span></div>}
       </main>
       {canOffer && <div className="helper-detail__action-bar"><Button onClick={() => setSheetOpen(true)}>Angebot machen</Button><button className="text-label helper-detail__question" type="button">Frage stellen</button></div>}
       {sheetOpen && (
