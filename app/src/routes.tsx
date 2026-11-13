@@ -7,13 +7,14 @@ import { DevIndex } from './screens/DevIndex'
 import { Login } from './screens/Login'
 import { CreateTrade } from './screens/b/CreateTrade'
 import { MyTrades } from './screens/b/MyTrades'
+import { Discover } from './screens/c/Discover'
 import { screens } from './screens/registry'
 
 // Built screens: path from registry.ts → component.
-// Example once B/11 exists:  '/trades': <MyTrades />,
 const built: Record<string, ReactNode> = {
   '/erstellen': <CreateTrade />,
   '/trades': <MyTrades />,
+  '/entdecken': <Discover />,
 }
 
 export const router = createBrowserRouter([
