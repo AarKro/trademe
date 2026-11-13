@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Placeholder icon until the real wordmark/app icon exists (DEC-002) -->
+  <rect width="512" height="512" rx="112" fill="#8e2d7a"/>
+  <path d="M136 168h240v56h-92v176h-56V224h-92z" fill="#fff"/>
+</svg>

@@ -1,0 +1,30 @@
+import type { ReactNode } from 'react'
+import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { ScreenStub } from './components/ScreenStub'
+import { TabLayout } from './components/TabLayout'
+import { RequireAuth } from './lib/auth'
+import { DevIndex } from './screens/DevIndex'
+import { Login } from './screens/Login'
+import { screens } from './screens/registry'
+
+// Built screens: path from registry.ts → component.
+// Example once B/11 exists:  '/trades': <MyTrades />,
+const built: Record<string, ReactNode> = {}
+
+export const router = createBrowserRouter([
+  { path: '/login', element: <Login /> },
+  {
+    element: <RequireAuth />,
+    children: [
+      {
+        element: <TabLayout />,
+        children: [
+          { index: true, element: <Navigate to="/entdecken" replace /> },
+          ...screens.map((s) => ({ path: s.path, element: built[s.path] ?? <ScreenStub screen={s} /> })),
+          { path: '/dev', element: <DevIndex /> },
+          { path: '*', element: <Navigate to="/entdecken" replace /> },
+        ],
+      },
+    ],
+  },
+])

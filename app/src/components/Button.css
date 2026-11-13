@@ -1,0 +1,24 @@
+.button {
+  height: var(--size-control-height);
+  padding: 0 var(--space-inset-lg);
+  border-radius: var(--radius-control);
+  border: var(--stroke-default) solid transparent;
+  cursor: pointer;
+  width: 100%;
+}
+
+.button--primary {
+  background: var(--color-action-primary);
+  color: var(--color-text-on-accent);
+}
+
+.button--secondary {
+  background: var(--color-surface-default);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-strong);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

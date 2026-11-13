@@ -1,0 +1,16 @@
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  height: var(--size-badge-height);
+  padding: 0 var(--space-inset-sm);
+  border-radius: var(--radius-badge);
+}
+
+.status-badge--offen            { color: var(--color-status-offen-fg); background: var(--color-status-offen-bg); }
+.status-badge--vergeben         { color: var(--color-status-vergeben-fg); background: var(--color-status-vergeben-bg); }
+.status-badge--zur_bestaetigung { color: var(--color-status-zur-bestaetigung-fg); background: var(--color-status-zur-bestaetigung-bg); }
+.status-badge--abgeschlossen    { color: var(--color-status-abgeschlossen-fg); background: var(--color-status-abgeschlossen-bg); }
+/* TODO: problem/storniert have no Figma tokens yet – ask A for color/status/… */
+.status-badge--problem,
+.status-badge--storniert        { color: var(--color-status-vergeben-fg); background: var(--color-status-vergeben-bg); }

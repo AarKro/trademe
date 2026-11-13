@@ -1,0 +1,105 @@
+/*
+ * Design tokens – mirrored from the Figma file «TradeMe», collection «Semantic»
+ * (page Design System). Names match the Figma variables 1:1:
+ *   Figma `color/text/primary` → CSS `--color-text-primary`
+ * Rule from VISUAL_DESIGN_BRIEF: no magic numbers – use these variables only.
+ * If a value is missing here, add it from Figma, don't hard-code it.
+ */
+:root {
+  /* color · text */
+  --color-text-primary: #0d1b28;
+  --color-text-secondary: #3d4953;
+  --color-text-tertiary: #5a646d;
+  --color-text-accent: #8e2d7a;
+  --color-text-on-accent: #ffffff;
+
+  /* color · icon */
+  --color-icon-default: #0d1b28;
+  --color-icon-subtle: #5a646d;
+  --color-icon-accent: #8e2d7a;
+
+  /* color · surface */
+  --color-surface-default: #ffffff;
+  --color-surface-muted: #efede8;
+  --color-surface-accent-subtle: #f8f2f7;
+
+  /* color · border */
+  --color-border-subtle: #e9eaec;
+  --color-border-default: #d3d6d8;
+  --color-border-control: #81888f;
+  --color-border-strong: #0d1b28;
+
+  /* color · action */
+  --color-action-primary: #8e2d7a;
+
+  /* color · status (trade_status in the database) */
+  --color-status-offen-fg: #8e2d7a;
+  --color-status-offen-bg: #f8f2f7;
+  --color-status-vergeben-fg: #0d1b28;
+  --color-status-vergeben-bg: #e9eaec;
+  --color-status-zur-bestaetigung-fg: #8a5300;
+  --color-status-zur-bestaetigung-bg: #fdf3dc;
+  --color-status-abgeschlossen-fg: #1e7a46;
+  --color-status-abgeschlossen-bg: #e8f4ec;
+
+  /* color · feedback */
+  --color-feedback-erfolg-fg: #1e7a46;
+  --color-feedback-erfolg-bg: #e8f4ec;
+
+  /* color · misc */
+  --color-star: #e8a317; /* TODO: exact value of color/star/400 from Figma */
+
+  /* space · inset (padding) */
+  --space-inset-none: 0px;
+  --space-inset-2xs: 2px;
+  --space-inset-xs: 4px;
+  --space-inset-sm: 8px;
+  --space-inset-md: 12px;
+  --space-inset-lg: 16px;
+  --space-inset-xl: 24px;
+
+  /* space · stack (vertical gap) */
+  --space-stack-2xs: 4px;
+  --space-stack-xs: 8px;
+  --space-stack-sm: 12px;
+  --space-stack-md: 16px;
+
+  /* space · inline (horizontal gap) */
+  --space-inline-xs: 4px;
+  --space-inline-sm: 8px;
+
+  /* radius */
+  --radius-control: 8px;
+  --radius-image: 8px;
+  --radius-card: 12px;
+  --radius-badge: 999px;
+  --radius-avatar: 999px;
+
+  /* stroke */
+  --stroke-default: 1px;
+  --stroke-strong: 2px;
+
+  /* size */
+  --size-icon-sm: 16px;
+  --size-icon-md: 20px;
+  --size-icon-lg: 24px;
+  --size-avatar-md: 40px;
+  --size-badge-height: 24px;
+  --size-control-height: 48px;
+  --size-app-bar-height: 56px;
+  --size-bottom-nav-height: 64px;
+  --size-screen-width: 390px;
+
+  /* typography (Figma text styles) */
+  --font-display: 'Sora', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+}
+
+/* Text styles – use as className, e.g. <h1 className="text-h1"> */
+.text-h1      { font: 600 28px/36px var(--font-display); letter-spacing: -0.5px; }
+.text-h3      { font: 600 16px/24px var(--font-body); }
+.text-body    { font: 400 16px/24px var(--font-body); }
+.text-body-strong { font: 600 16px/24px var(--font-body); }
+.text-label   { font: 500 14px/20px var(--font-body); }
+.text-caption { font: 400 12px/16px var(--font-body); letter-spacing: 0.1px; }
+.text-numeric { font: 600 20px/24px var(--font-body); letter-spacing: -0.2px; font-variant-numeric: tabular-nums; }

@@ -1,0 +1,6 @@
+.DS_Store
+.playwright-mcp/
+supabase/.temp/
+supabase/.branches/
+.vercel
+.claude/scheduled_tasks.lock

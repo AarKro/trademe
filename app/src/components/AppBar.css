@@ -1,0 +1,34 @@
+.app-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-inline-sm);
+  padding: 0 var(--space-inset-lg);
+  padding-top: env(safe-area-inset-top);
+}
+
+.app-bar--root {
+  min-height: var(--size-app-bar-height);
+  padding-top: calc(var(--space-inset-xl) + env(safe-area-inset-top));
+  justify-content: space-between;
+}
+
+.app-bar--compact {
+  height: calc(var(--size-app-bar-height) + env(safe-area-inset-top));
+  border-bottom: var(--stroke-default) solid var(--color-border-subtle);
+}
+
+.app-bar__title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-bar__back {
+  display: flex;
+  padding: var(--space-inset-xs);
+  margin-left: calc(-1 * var(--space-inset-xs));
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
