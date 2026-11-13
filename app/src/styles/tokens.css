@@ -89,6 +89,9 @@
   --size-app-bar-height: 56px;
   --size-bottom-nav-height: 64px;
   --size-screen-width: 390px;
+  --size-map-height: 420px;
+  --size-card-image: 80px;
+  --font-size-caption: 12px;
 
   /* typography (Figma text styles) */
   --font-display: 'Sora', system-ui, sans-serif;

@@ -5,11 +5,14 @@ import { TabLayout } from './components/TabLayout'
 import { RequireAuth } from './lib/auth'
 import { DevIndex } from './screens/DevIndex'
 import { Login } from './screens/Login'
+import { Discover } from './screens/c/Discover'
 import { screens } from './screens/registry'
 
 // Built screens: path from registry.ts → component.
 // Example once B/11 exists:  '/trades': <MyTrades />,
-const built: Record<string, ReactNode> = {}
+const built: Record<string, ReactNode> = {
+  '/entdecken': <Discover />,
+}
 
 export const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
