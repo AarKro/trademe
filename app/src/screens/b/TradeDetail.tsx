@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AppBar } from '../../components/AppBar'
 import { Button } from '../../components/Button'
-import { StatusBadge } from '../../components/StatusBadge'
+import { TradeLifecycle } from './TradeLifecycle'
 import { useAuth } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
 import type { Offer, Profile, Trade } from '../../lib/types'
@@ -165,7 +165,7 @@ function TradeDetailContent({ tradeId, userId }: { tradeId: string; userId: stri
   const waiting = detail?.trade.status === 'offen' && detail.offers.length === 0
   return (
     <>
-      <AppBar back title={waiting ? 'Mein Trade' : detail?.trade.title ?? 'Mein Trade'} />
+      <AppBar back title={detail?.trade.status === 'zur_bestaetigung' ? 'Abschluss prüfen' : waiting || !detail?.offers.length ? 'Mein Trade' : detail.trade.title} />
       <main className="screen trade-detail">
         {state === 'loading' && <p className="text-body" role="status">Trade wird geladen …</p>}
         {state === 'error' && (
@@ -180,7 +180,11 @@ function TradeDetailContent({ tradeId, userId }: { tradeId: string; userId: stri
         {state === null && <p className="text-body">Dieser Trade ist für dich nicht verfügbar.</p>}
         {waiting && <WaitingForOffers trade={detail.trade} />}
         {detail && detail.trade.status !== 'offen' && (
-          <StatusBadge status={detail.trade.status} />
+          <TradeLifecycle key={detail.trade.id + '/' + detail.trade.status} trade={detail.trade}
+            refresh={() => {
+              setState('loading')
+              setAttempt((previous) => previous + 1)
+            }} />
         )}
         {detail && detail.offers.length > 0 && (
           <section className="trade-detail__offers" aria-label="Angebote">
