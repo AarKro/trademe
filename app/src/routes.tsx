@@ -6,6 +6,8 @@ import { RequireAuth } from './lib/auth'
 import { DevComponents } from './screens/DevComponents'
 import { DevIndex } from './screens/DevIndex'
 import { Login } from './screens/Login'
+import { EditProfile } from './screens/a/EditProfile'
+import { MyProfile } from './screens/a/MyProfile'
 import { Checkout } from './screens/b/Checkout'
 import { CreateTrade } from './screens/b/CreateTrade'
 import { MyTrades } from './screens/b/MyTrades'
@@ -17,6 +19,8 @@ import { screens } from './screens/registry'
 
 // Built screens: path from registry.ts → component.
 const built: Record<string, ReactNode> = {
+  '/profil': <MyProfile />,
+  '/profil/bearbeiten': <EditProfile />,
   '/erstellen': <CreateTrade />,
   '/trades': <MyTrades />,
   '/trades/:tradeId/checkout': <Checkout />,

@@ -40,7 +40,7 @@ export function BottomSheet({
             <h2 id="sheet-title" className="text-h2">
               {title}
             </h2>
-            <button className="sheet__close" onClick={onClose} aria-label="Schliessen">
+            <button type="button" className="sheet__close" onClick={onClose} aria-label="Schliessen">
               <X aria-hidden />
             </button>
           </div>

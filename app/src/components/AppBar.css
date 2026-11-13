@@ -32,3 +32,13 @@
   background: none;
   cursor: pointer;
 }
+
+/* text action on the right, e.g. «Bearbeiten» / «Abbrechen» – use with className "text-label" */
+.app-bar__action {
+  flex-shrink: 0;
+  padding: var(--space-inset-xs) 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-accent);
+  cursor: pointer;
+}
