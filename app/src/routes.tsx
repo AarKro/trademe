@@ -10,6 +10,7 @@ import { MyTrades } from './screens/b/MyTrades'
 import { TradeDetail } from './screens/b/TradeDetail'
 import { Discover } from './screens/c/Discover'
 import { HelperTradeDetail } from './screens/c/HelperTradeDetail'
+import { Chat, ChatThread } from './screens/c/Chat'
 import { screens } from './screens/registry'
 
 // Built screens: path from registry.ts → component.
@@ -19,6 +20,8 @@ const built: Record<string, ReactNode> = {
   '/trades/:tradeId': <TradeDetail />,
   '/entdecken': <Discover />,
   '/auftraege/:tradeId': <HelperTradeDetail />,
+  '/chat': <Chat />,
+  '/chat/:tradeId/:helperId': <ChatThread />,
 }
 
 export const router = createBrowserRouter([
