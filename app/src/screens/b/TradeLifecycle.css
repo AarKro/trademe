@@ -1,0 +1,66 @@
+.trade-lifecycle__done,
+.trade-lifecycle__form {
+  display: grid;
+  gap: var(--space-stack-md);
+}
+
+.trade-lifecycle__done {
+  justify-items: center;
+  text-align: center;
+  padding-block: var(--space-inset-xl);
+}
+
+.trade-lifecycle__done .trade-lifecycle__done-avatar {
+  width: var(--size-bottom-nav-height);
+  height: var(--size-bottom-nav-height);
+}
+
+.trade-lifecycle__primary {
+  display: grid;
+  place-items: center;
+}
+
+.trade-lifecycle__link-button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.trade-lifecycle__form {
+  gap: var(--space-stack-sm);
+}
+
+.trade-lifecycle__form textarea {
+  height: auto;
+  padding-block: var(--space-inset-sm);
+}
+
+.trade-lifecycle__reminder,
+.trade-lifecycle__privacy {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-stack-xs);
+}
+
+.trade-lifecycle__reminder {
+  padding: var(--space-inset-lg);
+  border-inline-start: var(--stroke-strong) solid var(--color-status-zur-bestaetigung-fg);
+  border-radius: var(--radius-control);
+  background: var(--color-status-zur-bestaetigung-bg);
+}
+
+.trade-lifecycle__reminder svg,
+.trade-lifecycle__privacy svg {
+  flex: none;
+  width: var(--size-icon-md);
+  height: var(--size-icon-md);
+}
+
+.trade-lifecycle__reminder svg,
+.trade-lifecycle__reminder .text-body-strong {
+  color: var(--color-status-zur-bestaetigung-fg);
+}
+
+.trade-lifecycle__error {
+  color: var(--color-feedback-fehler-fg);
+}
