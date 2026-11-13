@@ -8,10 +8,12 @@ import { Login } from './screens/Login'
 import { CreateTrade } from './screens/b/CreateTrade'
 import { MyTrades } from './screens/b/MyTrades'
 import { TradeDetail } from './screens/b/TradeDetail'
+import { Discover } from './screens/c/Discover'
 import { screens } from './screens/registry'
 
 // Built screens: path from registry.ts → component.
 const built: Record<string, ReactNode> = {
+  '/entdecken': <Discover />,
   '/erstellen': <CreateTrade />,
   '/trades': <MyTrades />,
   '/trades/:tradeId': <TradeDetail />,
