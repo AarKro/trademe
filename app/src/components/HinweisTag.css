@@ -1,0 +1,24 @@
+.hinweis-tag {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: var(--space-inline-xs);
+  padding: var(--space-inset-2xs) var(--space-inset-sm);
+  border: var(--stroke-default) dashed var(--color-border-control);
+  border-radius: var(--radius-badge);
+  background: var(--color-surface-default);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.hinweis-tag svg {
+  width: var(--size-icon-sm);
+  height: var(--size-icon-sm);
+}
+
+.hinweis-tag--geprueft {
+  border-color: var(--color-feedback-erfolg-fg);
+  background: var(--color-feedback-erfolg-bg);
+  color: var(--color-feedback-erfolg-fg);
+}

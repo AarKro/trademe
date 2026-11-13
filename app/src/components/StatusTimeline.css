@@ -1,0 +1,96 @@
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-stack-sm);
+  padding: var(--space-inset-lg) var(--space-inset-md);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-subtle);
+}
+
+.timeline__steps {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline__step {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-stack-xs);
+}
+
+.timeline__track {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+}
+
+.timeline__line {
+  flex: 1;
+  height: var(--stroke-strong);
+  background: var(--color-border-default);
+}
+
+.timeline__line--reached { background: var(--color-action-primary); }
+.timeline__line--hidden  { background: transparent; }
+
+.timeline__dot {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--size-timeline-dot);
+  height: var(--size-timeline-dot);
+  border: var(--stroke-strong) solid var(--color-border-default);
+  border-radius: var(--radius-badge);
+  background: var(--color-surface-default);
+}
+
+.timeline__step--done .timeline__dot {
+  border-color: var(--color-action-primary);
+  background: var(--color-action-primary);
+  color: var(--color-icon-on-accent);
+}
+
+.timeline__dot svg {
+  width: var(--size-icon-sm);
+  height: var(--size-icon-sm);
+}
+
+.timeline__step--active .timeline__dot {
+  border-color: var(--color-action-primary);
+}
+
+/* inner dot of the active step */
+.timeline__step--active .timeline__dot::after {
+  content: '';
+  width: var(--size-timeline-dot-core);
+  height: var(--size-timeline-dot-core);
+  border-radius: var(--radius-badge);
+  background: var(--color-action-primary);
+}
+
+.timeline__label {
+  white-space: nowrap;
+  color: var(--color-text-tertiary);
+}
+
+.timeline__step--done .timeline__label   { color: var(--color-text-primary); }
+.timeline__step--active .timeline__label { color: var(--color-text-accent); }
+
+.timeline__deadline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-stack-xs);
+}
+
+.timeline__deadline svg {
+  flex-shrink: 0;
+  width: var(--size-icon-sm);
+  height: var(--size-icon-sm);
+  color: var(--color-icon-accent);
+}

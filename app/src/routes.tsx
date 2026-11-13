@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { ScreenStub } from './components/ScreenStub'
 import { TabLayout } from './components/TabLayout'
 import { RequireAuth } from './lib/auth'
+import { DevComponents } from './screens/DevComponents'
 import { DevIndex } from './screens/DevIndex'
 import { Login } from './screens/Login'
 import { CreateTrade } from './screens/b/CreateTrade'
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
           { index: true, element: <Navigate to="/entdecken" replace /> },
           ...screens.map((s) => ({ path: s.path, element: built[s.path] ?? <ScreenStub screen={s} /> })),
           { path: '/dev', element: <DevIndex /> },
+          { path: '/dev/components', element: <DevComponents /> },
           { path: '*', element: <Navigate to="/entdecken" replace /> },
         ],
       },

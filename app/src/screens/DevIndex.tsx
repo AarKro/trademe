@@ -9,6 +9,9 @@ export function DevIndex() {
     <>
       <AppBar title="Screens" back />
       <main className="screen">
+        <Link to="/dev/components" className="card text-body-strong text-accent">
+          Gemeinsame Komponenten ansehen →
+        </Link>
         {(['A', 'B', 'C'] as const).map((owner) => (
           <section key={owner} className="card">
             <h2 className="text-h3">Owner {owner}</h2>
