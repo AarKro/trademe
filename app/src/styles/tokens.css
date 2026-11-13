@@ -43,6 +43,8 @@
   --color-status-abgeschlossen-bg: #e8f4ec;
 
   /* color · feedback */
+  --color-feedback-fehler-fg: #b0172a;
+  --color-feedback-fehler-bg: #fcebec;
   --color-feedback-erfolg-fg: #1e7a46;
   --color-feedback-erfolg-bg: #e8f4ec;
 
