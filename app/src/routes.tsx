@@ -5,6 +5,7 @@ import { TabLayout } from './components/TabLayout'
 import { RequireAuth } from './lib/auth'
 import { DevIndex } from './screens/DevIndex'
 import { Login } from './screens/Login'
+import { Checkout } from './screens/b/Checkout'
 import { CreateTrade } from './screens/b/CreateTrade'
 import { MyTrades } from './screens/b/MyTrades'
 import { TradeDetail } from './screens/b/TradeDetail'
@@ -16,6 +17,7 @@ const built: Record<string, ReactNode> = {
   '/entdecken': <Discover />,
   '/erstellen': <CreateTrade />,
   '/trades': <MyTrades />,
+  '/trades/:tradeId/checkout': <Checkout />,
   '/trades/:tradeId': <TradeDetail />,
 }
 
