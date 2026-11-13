@@ -1,0 +1,20 @@
+.discover-screen { flex: 1; display: flex; flex-direction: column; gap: var(--space-stack-sm); padding-bottom: calc(var(--size-bottom-nav-height) + var(--space-inset-lg)); }
+.discover-filters { display: flex; gap: var(--space-inline-sm); overflow-x: auto; padding: var(--space-inset-xs) var(--space-inset-lg) 0; }
+.discover-chip { display: inline-flex; align-items: center; gap: var(--space-stack-2xs); min-height: var(--size-badge-height); padding: var(--space-inset-sm) var(--space-inset-md); border: var(--stroke-default) solid var(--color-border-default); border-radius: var(--radius-badge); background: var(--color-surface-muted); white-space: nowrap; cursor: pointer; }
+.discover-chip--active { color: var(--color-text-accent); border-color: var(--color-action-primary); background: var(--color-surface-accent-subtle); }
+.discover-map-wrap { position: relative; height: var(--size-map-height); overflow: hidden; background: var(--color-surface-muted); }
+.discover-map { height: 100%; width: 100%; z-index: 0; }
+.discover-map-note { position: absolute; z-index: 1; bottom: var(--space-inset-sm); left: var(--space-inset-lg); right: var(--space-inset-lg); padding: var(--space-inset-sm); border-radius: var(--radius-control); background: var(--color-surface-default); box-shadow: 0 var(--space-inset-xs) var(--space-inset-md) rgb(13 27 40 / 12%); }
+.discover-list { display: flex; flex-direction: column; gap: var(--space-stack-xs); padding: 0 var(--space-inset-lg) var(--space-inset-lg); }
+.discover-list__heading { display: flex; justify-content: space-between; align-items: center; padding: var(--space-inset-xs) 0; }
+.discover-card { display: flex; align-items: center; gap: var(--space-stack-sm); padding: var(--space-inset-md); border: var(--stroke-default) solid var(--color-border-subtle); border-radius: var(--radius-card); background: var(--color-surface-default); }
+.discover-card__image { display: grid; flex: 0 0 var(--size-card-image); place-items: center; width: var(--size-card-image); height: var(--size-card-image); overflow: hidden; border-radius: var(--radius-image); color: var(--color-icon-subtle); background: var(--color-surface-muted); }
+.discover-card__image img { width: 100%; height: 100%; object-fit: cover; }
+.discover-card__content { min-width: 0; display: flex; flex: 1; flex-direction: column; gap: var(--space-stack-2xs); }
+.discover-card__content h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.discover-empty { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-stack-sm); padding: var(--space-inset-xl); text-align: center; }
+.discover-empty__icon { display: grid; place-items: center; width: var(--size-avatar-md); height: var(--size-avatar-md); color: var(--color-text-accent); border-radius: var(--radius-avatar); background: var(--color-surface-accent-subtle); }
+.discover-status, .discover-error { padding: var(--space-inset-lg); }
+.discover-error { display: flex; flex-direction: column; gap: var(--space-stack-xs); color: var(--color-text-accent); }
+.discover-error button { display: inline-flex; align-items: center; gap: var(--space-inline-xs); width: fit-content; padding: var(--space-inset-xs) 0; border: 0; color: inherit; background: none; cursor: pointer; }
+.leaflet-control-attribution { font-size: var(--font-size-caption); }
