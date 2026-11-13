@@ -27,9 +27,13 @@
 }
 
 /* Bigger tap targets when used as an input */
+.rating--input {
+  gap: var(--space-inline-sm);
+}
+
 .rating--input svg {
-  width: var(--size-icon-lg);
-  height: var(--size-icon-lg);
+  width: var(--size-rating-input);
+  height: var(--size-rating-input);
 }
 
 .rating-summary {

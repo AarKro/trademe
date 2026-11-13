@@ -29,3 +29,10 @@
   opacity: 0.5;
   cursor: default;
 }
+
+/* Figma A/11: disabled primary = grey, not faded */
+.button--primary:disabled {
+  opacity: 1;
+  background: var(--color-action-disabled);
+  color: var(--color-text-disabled);
+}

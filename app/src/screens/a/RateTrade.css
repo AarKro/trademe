@@ -1,0 +1,48 @@
+/* A/11–A/14 Bewertung */
+.rate__hero {
+  display: flex;
+  align-items: center;
+  gap: var(--space-stack-sm);
+}
+
+.rate__image {
+  flex-shrink: 0;
+  width: var(--size-avatar-lg);
+  height: var(--size-avatar-lg);
+  border-radius: var(--radius-image);
+  object-fit: cover;
+}
+
+.rate__image--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface-muted);
+  color: var(--color-icon-subtle);
+}
+
+.rate__hero-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-stack-2xs);
+}
+
+.rate__stars {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-stack-xs);
+  padding: var(--space-inset-lg) 0 var(--space-inset-sm);
+  text-align: center;
+}
+
+/* A/13: state centred, room for two actions in the action bar */
+.screen.rate__done {
+  justify-content: center;
+  padding-bottom: calc(
+    var(--size-bottom-nav-height) + var(--size-control-height) + var(--size-text-action-height) + 3 * var(--space-inset-md) +
+      env(safe-area-inset-bottom)
+  );
+}
