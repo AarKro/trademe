@@ -12,17 +12,20 @@
   --color-text-tertiary: #5a646d;
   --color-text-accent: #8e2d7a;
   --color-text-on-accent: #ffffff;
+  --color-text-inverse: #ffffff;
 
   /* color · icon */
   --color-icon-default: #0d1b28;
   --color-icon-subtle: #5a646d;
   --color-icon-accent: #8e2d7a;
+  --color-icon-on-accent: #ffffff;
 
   /* color · surface */
   --color-surface-default: #ffffff;
   --color-surface-subtle: #f7f6f3;
   --color-surface-muted: #efede8;
   --color-surface-accent-subtle: #f8f2f7;
+  --color-surface-inverse: #0d1b28;
 
   --color-overlay-scrim: rgb(13 27 40 / 40%);
 
@@ -52,7 +55,14 @@
   --color-feedback-erfolg-bg: #e8f4ec;
 
   /* color · misc */
-  --color-star: #e8a317; /* TODO: exact value of color/star/400 from Figma */
+  --color-rating-filled: #fbbc04; /* ← primitive color/star/400 */
+  --color-star: var(--color-rating-filled); /* old name, kept for compatibility */
+
+  /* color · elevation (Figma effect Elevation/Raised: 0 2 8 shadow) */
+  --color-elevation-shadow: #0d1b2814;
+  --shadow-raised: 0 2px 8px var(--color-elevation-shadow);
+  /* scrim behind bottom sheets: surface/inverse at 40 % */
+  --color-scrim: color-mix(in srgb, var(--color-surface-inverse) 40%, transparent);
 
   /* space · inset (padding) */
   --space-inset-none: 0px;
@@ -68,6 +78,8 @@
   --space-stack-xs: 8px;
   --space-stack-sm: 12px;
   --space-stack-md: 16px;
+  --space-stack-xl: 32px;
+  --space-stack-2xl: 48px;
 
   /* space · inline (horizontal gap) */
   --space-inline-xs: 4px;
@@ -88,9 +100,18 @@
   --size-icon-sm: 16px;
   --size-icon-md: 20px;
   --size-icon-lg: 24px;
+  --size-avatar-sm: 32px;
   --size-avatar-md: 40px;
+  --size-avatar-lg: 64px;
+  --size-avatar-xl: 96px;
   --size-badge-height: 24px;
   --size-control-height: 48px;
+  --size-toast-height: 48px;
+  --size-sheet-handle-width: 40px;
+  --size-sheet-handle-height: 4px;
+  --size-timeline-dot: 20px;
+  --size-timeline-dot-core: 8px;
+  --size-text-action-height: 32px;
   --size-app-bar-height: 56px;
   --size-bottom-nav-height: 64px;
   --size-mascot: 160px;

@@ -1,0 +1,14 @@
+.dev-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-stack-sm);
+  padding-bottom: var(--space-inset-xl);
+  border-bottom: var(--stroke-default) solid var(--color-border-subtle);
+}
+
+.dev-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-inline-sm);
+}

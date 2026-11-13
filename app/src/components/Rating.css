@@ -1,0 +1,45 @@
+.rating {
+  display: inline-flex;
+  gap: var(--space-inline-xs);
+}
+
+.rating svg {
+  width: var(--size-icon-md);
+  height: var(--size-icon-md);
+}
+
+.rating__star {
+  color: var(--color-border-control);
+  fill: none;
+}
+
+.rating__star--filled {
+  color: var(--color-rating-filled);
+  fill: var(--color-rating-filled);
+}
+
+.rating__button {
+  display: flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* Bigger tap targets when used as an input */
+.rating--input svg {
+  width: var(--size-icon-lg);
+  height: var(--size-icon-lg);
+}
+
+.rating-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-stack-2xs);
+  white-space: nowrap;
+}
+
+.rating-summary__star {
+  width: var(--size-icon-sm);
+  height: var(--size-icon-sm);
+}
