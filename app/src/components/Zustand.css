@@ -1,0 +1,29 @@
+.zustand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-stack-md);
+  padding: var(--space-inset-xl) 0;
+  text-align: center;
+}
+
+.zustand__mascot {
+  position: relative;
+  flex-shrink: 0;
+  width: var(--size-mascot);
+  height: var(--size-mascot);
+}
+
+.zustand__mascot > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Pip is built from parts in Figma (Maskottchen Pip 286:165); positions as % of the 160 px frame */
+.zustand__mascot--pip > .zustand__pip-shadow { inset: auto; left: 24%; top: 84.25%; width: 55%; height: 5%; }
+.zustand__mascot--pip > .zustand__pip-body   { inset: auto; left: 9.75%; top: 10.4%; width: 80%; height: 78.85%; }
+.zustand__mascot--pip > .zustand__pip-glint  { inset: auto; top: 41.75%; width: 2%; height: 2%; }
+.zustand__mascot--pip > .zustand__pip-glint--left  { left: 53.25%; }
+.zustand__mascot--pip > .zustand__pip-glint--right { left: 70.5%; top: 41.25%; }
