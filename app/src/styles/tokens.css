@@ -96,6 +96,8 @@
   --size-screen-width: 390px;
   --size-map-height: 420px;
   --size-card-image: 80px;
+  --size-sheet-handle: 40px;
+  --size-textarea: 96px;
   --font-size-caption: 12px;
 
   /* typography (Figma text styles) */
