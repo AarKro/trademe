@@ -1,5 +1,7 @@
 # TradeMe
 
+> **New to the project?** Start with [SETUP.md](SETUP.md). Agents: read [AGENTS.md](AGENTS.md).
+
 Progressive Web App for the TradeMe school project. The design lives in Figma, page **Screens V4**.
 
 | Part | Where | Tech |
@@ -21,7 +23,7 @@ Push this repo to GitHub and add the other two as collaborators.
 ### 2. Supabase
 1. Create a project at [supabase.com](https://supabase.com) (region: Zürich or Frankfurt).
 2. **Organization → Team**: invite the other two.
-3. **SQL Editor**: run the files in `supabase/migrations/` in order (`…000000_init.sql`, then `…000100_trade_flow.sql`).
+3. Apply the database schema with the Supabase CLI (see "Database changes" below): `npx supabase db push --remote`.
    If `pg_cron` fails, enable it under **Database → Extensions** first.
 4. **Authentication → Sign In / Providers → Email**: switch **off** "Confirm email". The free tier only sends a few emails per hour, so confirmation emails get in the way while testing.
 5. **Project Settings → API**: you'll need the URL, the `anon` key and the `service_role` key.
@@ -31,7 +33,7 @@ Push this repo to GitHub and add the other two as collaborators.
 ### 3. Vercel
 1. [vercel.com](https://vercel.com) → **Add New → Project** → import the GitHub repo.
 2. **Root Directory: `app`**. The framework (Vite) is detected automatically.
-3. **Settings → Environment Variables**: set all variables from `app/.env.example`.
+3. **Settings → Environment Variables**: set the two values from `app/.env` plus the secret ones from `app/.env.example`.
    *Optional:* instead connect Supabase through the **Vercel Marketplace**, which fills in the Supabase keys automatically.
 4. **Settings → Deployment Protection**: switch off "Vercel Authentication". Otherwise only the owner can open preview links, because the free Hobby plan has no team members. The other two don't need a Vercel account: every push to GitHub deploys automatically.
 
@@ -47,8 +49,7 @@ Push this repo to GitHub and add the other two as collaborators.
 
 ```bash
 cd app
-cp .env.example .env.local   # once: add VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY
-npm install
+npm install                  # Supabase URL + anon key are already in app/.env
 npm run dev
 ```
 
@@ -90,7 +91,14 @@ The full mapping of every V4 frame is in `app/src/screens/registry.ts`.
 
 - Making an offer: `insert into offers`. Chat: `insert into messages` + subscribe via `supabase.channel(…).on('postgres_changes', …)`.
 - Photos: Storage bucket `photos`, path `<user-id>/<filename>`.
-- **Database changes:** add a new file in `supabase/migrations/` (never edit old ones), run it in the SQL editor, tell the others.
+- **Database changes:** add a new file in `supabase/migrations/<timestamp>_<name>.sql` (never edit old ones), then apply it:
+  ```bash
+  npx supabase login                                        # once, opens the browser
+  npx supabase link --project-ref cidewfxqgwbdhfvlluql      # once per laptop
+  npx supabase db push --remote --dry-run                   # shows what would run
+  npx supabase db push --remote                             # applies it
+  ```
+  Don't run migrations by hand in the SQL editor, because then the CLI doesn't know they ran.
 
 ### Business rules (built into the database)
 - Payment methods: TWINT, card (held until release) or cash (no payment protection)
