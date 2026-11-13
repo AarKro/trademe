@@ -1,0 +1,94 @@
+.screen.my-trades {
+  padding-inline: var(--space-inset-xl);
+}
+
+.my-trades--empty {
+  justify-content: center;
+}
+
+.my-trades__empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-stack-md);
+  padding-block: var(--space-inset-xl);
+  text-align: center;
+}
+
+.my-trades__pip {
+  position: relative;
+  width: var(--size-mascot);
+  height: var(--size-mascot);
+}
+
+.my-trades__pip img { position: absolute; }
+.my-trades__pip img:nth-child(1) { left: 24%; top: 84.25%; }
+.my-trades__pip img:nth-child(2) { left: 9.75%; top: 10.4%; }
+.my-trades__pip img:nth-child(3) { left: 53.25%; top: 41.75%; }
+.my-trades__pip img:nth-child(4) { left: 70.5%; top: 41.25%; }
+
+.my-trades__section,
+.my-trades__section ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-stack-sm);
+}
+
+.my-trades__section:first-of-type:has(+ .my-trades__section) {
+  margin-bottom: var(--space-stack-sm);
+}
+
+.my-trades__section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.my-trades__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-stack-sm);
+  border: var(--stroke-default) solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  padding: var(--space-inset-md);
+}
+
+.my-trades__photo {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--size-trade-thumbnail);
+  height: var(--size-trade-thumbnail);
+  border-radius: var(--radius-image);
+  background: var(--color-surface-muted);
+  color: var(--color-icon-subtle);
+  object-fit: cover;
+}
+
+.my-trades__copy {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-stack-2xs);
+  overflow-wrap: anywhere;
+}
+
+.my-trades__copy .status-badge {
+  height: auto;
+  min-height: var(--size-badge-height);
+  font: inherit;
+}
+
+.my-trades__copy .status-badge.text-label {
+  font-size: var(--font-size-caption);
+  line-height: var(--font-line-height-caption);
+}
+
+.my-trades__chevron,
+.my-trades__photo svg {
+  flex-shrink: 0;
+  width: var(--size-icon-md);
+  height: var(--size-icon-md);
+  color: var(--color-icon-subtle);
+}
