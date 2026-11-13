@@ -14,11 +14,11 @@ import { screens } from './screens/registry'
 
 // Built screens: path from registry.ts → component.
 const built: Record<string, ReactNode> = {
-  '/entdecken': <Discover />,
   '/erstellen': <CreateTrade />,
   '/trades': <MyTrades />,
   '/trades/:tradeId/checkout': <Checkout />,
   '/trades/:tradeId': <TradeDetail />,
+  '/entdecken': <Discover />,
 }
 
 export const router = createBrowserRouter([
