@@ -20,6 +20,7 @@
 
   /* color · surface */
   --color-surface-default: #ffffff;
+  --color-surface-subtle: #f7f6f3;
   --color-surface-muted: #efede8;
   --color-surface-accent-subtle: #f8f2f7;
 
