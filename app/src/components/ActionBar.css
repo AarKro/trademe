@@ -1,0 +1,24 @@
+.action-bar {
+  position: fixed;
+  bottom: calc(var(--size-bottom-nav-height) + env(safe-area-inset-bottom));
+  left: 50%;
+  z-index: 2;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--size-screen-width);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-stack-xs);
+  padding: var(--space-inset-md) var(--space-inset-xl);
+  border-top: var(--stroke-default) solid var(--color-border-subtle);
+  background: var(--color-surface-default);
+}
+
+/* room for the action bar (button + padding) on top of the bottom nav */
+.screen.screen--with-action-bar {
+  padding-bottom: calc(
+    var(--size-bottom-nav-height) + var(--size-control-height) + 2 * var(--space-inset-md) + var(--space-inset-lg) +
+      env(safe-area-inset-bottom)
+  );
+}

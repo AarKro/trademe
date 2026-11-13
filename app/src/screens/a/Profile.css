@@ -1,0 +1,209 @@
+/* Shared styles for the A screens (profile & ratings). Figma content padding = space/inset/xl. */
+.screen.profile {
+  padding-inline: var(--space-inset-xl);
+}
+
+.profile__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-stack-md);
+}
+
+.profile__head-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-stack-2xs);
+}
+
+.profile__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-stack-2xs);
+}
+
+.profile__section .chips {
+  margin-top: var(--space-stack-2xs);
+}
+
+.profile__link {
+  align-self: flex-start;
+}
+
+/* --- Progress card (A/15) ------------------------------------------------ */
+.profile-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-stack-sm);
+  padding: var(--space-inset-lg);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-accent-subtle);
+}
+
+.profile-progress__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.profile-progress__bar {
+  height: var(--size-progress-height);
+  overflow: hidden;
+  border-radius: var(--radius-badge);
+  background: var(--color-surface-default);
+}
+
+.profile-progress__bar span {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-badge);
+  background: var(--color-action-primary);
+}
+
+.profile-progress__task {
+  display: flex;
+  align-items: center;
+  gap: var(--space-stack-sm);
+  padding: var(--space-inset-md);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--color-surface-default);
+  text-align: left;
+  cursor: pointer;
+}
+
+.profile-progress__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-inset-2xs);
+}
+
+.profile-progress__icon,
+.profile-progress__chevron {
+  flex-shrink: 0;
+  width: var(--size-icon-md);
+  height: var(--size-icon-md);
+}
+
+.profile-progress__icon    { color: var(--color-icon-accent); }
+.profile-progress__chevron { color: var(--color-icon-default); }
+
+/* --- Chips (skills, payment methods) ------------------------------------- */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-stack-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-stack-2xs);
+  padding: var(--space-inset-sm) var(--space-inset-md);
+  border: var(--stroke-default) solid transparent;
+  border-radius: var(--radius-badge);
+  background: var(--color-surface-muted);
+  color: var(--color-text-primary);
+}
+
+/* selected / removable chip (A/16) */
+.chip--selected {
+  border-color: var(--color-action-primary);
+  background: var(--color-surface-accent-subtle);
+  color: var(--color-text-accent);
+}
+
+button.chip {
+  cursor: pointer;
+}
+
+.chip svg {
+  width: var(--size-icon-sm);
+  height: var(--size-icon-sm);
+}
+
+.chip-input {
+  width: auto;
+  flex: 1;
+  min-width: 0;
+}
+
+/* --- Edit form (A/16) ----------------------------------------------------- */
+.profile-edit__photo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-stack-md);
+}
+
+.profile-edit__photo-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-inline-sm);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-accent);
+  cursor: pointer;
+}
+
+.profile-edit__photo-button svg {
+  width: var(--size-icon-md);
+  height: var(--size-icon-md);
+}
+
+.profile-edit__label-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-inline-sm);
+}
+
+.profile-edit__textarea {
+  min-height: var(--size-textarea);
+  height: auto;
+  padding: var(--space-inset-md);
+  resize: vertical;
+}
+
+.profile-edit__add-row {
+  display: flex;
+  gap: var(--space-inline-sm);
+}
+
+.profile-edit__add-row .button {
+  width: auto;
+}
+
+.profile-edit__error {
+  color: var(--color-feedback-fehler-fg);
+}
+
+.profile-edit__error svg {
+  flex-shrink: 0;
+  width: var(--size-icon-sm);
+  height: var(--size-icon-sm);
+}
+
+.profile-edit__verify {
+  display: flex;
+  align-items: center;
+  gap: var(--space-stack-sm);
+  padding: var(--space-inset-md);
+  border: var(--stroke-default) solid var(--color-border-default);
+  border-radius: var(--radius-card);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.profile-edit__verify > svg:first-child {
+  flex-shrink: 0;
+  width: var(--size-icon-lg);
+  height: var(--size-icon-lg);
+  color: var(--color-icon-accent);
+}
