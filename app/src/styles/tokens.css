@@ -91,6 +91,7 @@
   --radius-card: 12px;
   --radius-badge: 999px;
   --radius-avatar: 999px;
+  --radius-bubble: 12px;
 
   /* stroke */
   --stroke-default: 1px;
@@ -121,6 +122,9 @@
   --size-card-image: 80px;
   --size-sheet-handle: 40px;
   --size-textarea: 96px;
+  --size-composer: 56px;
+  --size-composer-input: 40px;
+  --size-chat-bubble: 280px;
   --font-size-caption: 12px;
 
   /* typography (Figma text styles) */
