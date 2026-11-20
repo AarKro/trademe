@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
 import { Link } from 'react-router-dom'
-import { Globe, Navigation, RefreshCw, SlidersHorizontal } from 'lucide-react'
+import { Globe, Navigation, RefreshCw, SlidersHorizontal, X } from 'lucide-react'
 import { TradePhoto } from '../../components/TradePhoto'
 import { AppBar } from '../../components/AppBar'
 import { BottomSheet } from '../../components/BottomSheet'
@@ -88,6 +88,7 @@ export function Discover() {
   const [draftMax, setDraftMax] = useState('')
   const [filterOpen, setFilterOpen] = useState(false)
   const [view, setView] = useState<DiscoverView>('list')
+  const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null)
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null)
   const [radius, setRadius] = useState(5)
   const [locationError, setLocationError] = useState<string | null>(null)
@@ -130,6 +131,7 @@ export function Discover() {
   const center: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : zurich
   const filtered = remoteOnly || Boolean(priceMin || priceMax) || Boolean(userLocation)
   const activeFilterCount = Number(remoteOnly) + Number(Boolean(priceMin || priceMax)) + Number(Boolean(userLocation))
+  const selectedVisibleTrade = selectedTrade && visibleTrades.some((trade) => trade.id === selectedTrade.id) ? selectedTrade : null
   const resetFilters = () => {
     setRemoteOnly(false)
     setPriceMin('')
@@ -138,6 +140,12 @@ export function Discover() {
     setDraftMax('')
     setUserLocation(null)
     setLocationError(null)
+    setSelectedTrade(null)
+  }
+
+  function changeView(nextView: DiscoverView) {
+    setView(nextView)
+    if (nextView === 'list') setSelectedTrade(null)
   }
 
   function openFilters() {
@@ -154,13 +162,13 @@ export function Discover() {
   return (
     <>
       <AppBar title="Entdecken" />
-      <main className="discover-screen">
+      <main className={`discover-screen ${view === 'map' ? 'discover-screen--map' : ''}`}>
         <div className="discover-toolbar">
           <Segmented
             label="Ansicht"
             options={[{ value: 'list', label: 'Liste' }, { value: 'map', label: 'Karte' }]}
             value={view}
-            onChange={setView}
+            onChange={changeView}
           />
           <button
             type="button"
@@ -189,11 +197,26 @@ export function Discover() {
                   <TileLayer attribution="&copy; OpenStreetMap" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                   {userLocation && <Marker position={[userLocation.lat, userLocation.lng]}><Popup>Dein Standort</Popup></Marker>}
                   {mapTrades.map((trade) => (
-                    <Marker key={trade.id} position={[trade.lat!, trade.lng!]}>
-                      <Popup><Link to={`/auftraege/${trade.id}`}><strong>{trade.title}</strong><br />CHF {trade.budget_chf.toFixed(0)}</Link></Popup>
-                    </Marker>
+                    <Marker
+                      key={trade.id}
+                      position={[trade.lat!, trade.lng!]}
+                      eventHandlers={{ click: () => setSelectedTrade(trade) }}
+                    />
                   ))}
                 </MapContainer>
+                {selectedVisibleTrade && (
+                  <aside className="discover-map-card" aria-label="Ausgewählter Auftrag">
+                    <button type="button" className="discover-map-card__close" onClick={() => setSelectedTrade(null)} aria-label="Auftrag schliessen"><X aria-hidden /></button>
+                    <Link className="discover-map-card__link" to={`/auftraege/${selectedVisibleTrade.id}`}>
+                      <div className="discover-map-card__photo"><TradePhoto src={selectedVisibleTrade.photo_urls[0]} loading="lazy" /></div>
+                      <div className="discover-map-card__content">
+                        <h2 className="text-body-strong">{selectedVisibleTrade.title}</h2>
+                        <p className="text-caption text-secondary">{formatLocation(selectedVisibleTrade)} · {formatTradeDate(selectedVisibleTrade)}</p>
+                        <p className="text-body-strong">CHF {selectedVisibleTrade.budget_chf.toFixed(0)}</p>
+                      </div>
+                    </Link>
+                  </aside>
+                )}
                 {mapTrades.length === 0 && (
                   <p className="discover-map-note text-caption">
                     Aufträge ohne Standort findest du in der Listenansicht.

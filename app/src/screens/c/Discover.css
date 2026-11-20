@@ -1,13 +1,25 @@
 .discover-screen { flex: 1; display: flex; flex-direction: column; gap: var(--space-stack-sm); padding-bottom: calc(var(--size-bottom-nav-height) + var(--space-inset-lg)); }
+.discover-screen--map { min-height: calc(100dvh - var(--size-app-bar-height)); height: calc(100dvh - var(--size-app-bar-height)); min-width: 0; }
+.discover-screen--map .discover-toolbar { flex: none; }
 .discover-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-inline-sm); padding: var(--space-inset-xs) var(--space-inset-lg) 0; }
 .discover-toolbar .segmented { min-width: 0; }
 .discover-filter-trigger { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-inline-xs); min-height: var(--size-text-action-height); padding: 0 var(--space-inset-md); border: var(--stroke-default) solid var(--color-border-default); border-radius: var(--radius-control); color: var(--color-text-primary); background: var(--color-surface-muted); white-space: nowrap; cursor: pointer; }
 .discover-filter-trigger--active { border-color: var(--color-action-primary); color: var(--color-text-accent); background: var(--color-surface-accent-subtle); }
 .discover-filter-trigger__count { display: inline-grid; min-width: var(--size-icon-sm); height: var(--size-icon-sm); place-items: center; padding: 0 var(--space-inset-2xs); border-radius: var(--radius-badge); color: var(--color-text-on-accent); background: var(--color-action-primary); }
 .discover-map-wrap { position: relative; height: min(58dvh, var(--size-map-height)); min-height: 280px; overflow: hidden; background: var(--color-surface-muted); }
+.discover-screen--map .discover-map-wrap { flex: 1; height: auto; min-height: 0; }
 .discover-map { height: 100%; width: 100%; z-index: 0; }
 .discover-map-note { position: absolute; z-index: 1; bottom: var(--space-inset-sm); left: var(--space-inset-lg); right: var(--space-inset-lg); padding: var(--space-inset-sm); border-radius: var(--radius-control); background: var(--color-surface-default); box-shadow: var(--shadow-raised); }
 .discover-map-note button { display: block; margin-top: var(--space-stack-2xs); padding: 0; border: 0; color: var(--color-text-accent); background: none; cursor: pointer; }
+.discover-map-card { position: absolute; z-index: 1000; right: var(--space-inset-lg); bottom: var(--space-inset-lg); left: var(--space-inset-lg); display: flex; align-items: center; gap: var(--space-inline-sm); padding: var(--space-inset-sm); padding-right: var(--space-inset-xl); border: var(--stroke-default) solid var(--color-border-subtle); border-radius: var(--radius-card); background: var(--color-surface-default); box-shadow: var(--shadow-raised); animation: discover-map-card-in 180ms ease-out; }
+.discover-map-card__link { display: flex; align-items: center; min-width: 0; flex: 1; gap: var(--space-inline-sm); color: var(--color-text-primary); text-decoration: none; }
+.discover-map-card__photo { flex: 0 0 var(--size-trade-thumbnail); width: var(--size-trade-thumbnail); height: var(--size-trade-thumbnail); overflow: hidden; border-radius: var(--radius-image); background: var(--color-surface-muted); }
+.discover-map-card__photo img { width: 100%; height: 100%; object-fit: cover; }
+.discover-map-card__content { min-width: 0; display: flex; flex: 1; flex-direction: column; gap: var(--space-stack-2xs); }
+.discover-map-card__content h2, .discover-map-card__content p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.discover-map-card__close { position: absolute; top: var(--space-inset-xs); right: var(--space-inset-xs); display: grid; width: var(--size-icon-md); height: var(--size-icon-md); place-items: center; padding: 0; border: 0; color: var(--color-icon-default); background: transparent; cursor: pointer; }
+.discover-map-card__close svg { width: var(--size-icon-md); height: var(--size-icon-md); }
+@keyframes discover-map-card-in { from { opacity: 0; transform: translateY(var(--space-inset-md)); } }
 .discover-list { display: flex; flex-direction: column; gap: var(--space-stack-xs); padding: 0 var(--space-inset-lg) var(--space-inset-lg); }
 .discover-list__heading { display: flex; justify-content: space-between; align-items: center; padding: var(--space-inset-xs) 0; }
 .discover-card { display: flex; align-items: center; gap: var(--space-stack-sm); padding: var(--space-inset-md); border: var(--stroke-default) solid var(--color-border-subtle); border-radius: var(--radius-card); background: var(--color-surface-default); }
@@ -37,3 +49,7 @@
 
 /* TradePhoto keeps cards consistent when no photo is available. */
 .discover-card { color: var(--color-text-primary); text-decoration: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .discover-map-card { animation: none; }
+}
