@@ -93,7 +93,7 @@ Priorität: **P1** = Lücke im Ablauf, **P2** = unklar/schlecht sichtbar, **P3**
   - Button «Chatten» mit der auftraggebenden Person (ab Angebot gesendet).
   - C/09: Button «Bewertung abgeben» → `/trades/:id/bewerten` (A/14).
   - Abgelehntes Angebot freundlich anzeigen (🔒 A-1).
-- [ ] **C-3 (P1) Adresse nach der Zahlung zeigen** 🔒 (A-1)
+- [x] **C-3 (P1) Adresse nach der Zahlung zeigen** (A-1 gemerged)
   In C/08 / C/05 die volle Adresse aus `trade_addresses` anzeigen, mit Link «In Karte öffnen». Vorher nur das Quartier und der Hinweis «Adresse siehst du nach der Zahlung».
 - [ ] **C-4 (P2) Filter in Entdecken** 🟢 Preis/Remote · 🔒 Tags/Zahlungsart
   Filter-Sheet (Bottom-Sheet) mit: Tags, Zahlungsart, Preisbereich (min–max CHF), «Remote». Aktive Filter als Chips mit ×. Gilt für Karte und Liste.

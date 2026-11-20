@@ -1,11 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Calendar, ChevronRight, Image as ImageIcon, MapPin, Wallet } from 'lucide-react'
+import { Calendar, ChevronRight, ExternalLink, Image as ImageIcon, MapPin, Wallet } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { AppBar } from '../../components/AppBar'
 import { Button } from '../../components/Button'
 import { useAuth } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
-import type { Profile, Trade } from '../../lib/types'
+import type { Profile, Trade, TradeAddress } from '../../lib/types'
 import './HelperTradeDetail.css'
 
 const currency = new Intl.NumberFormat('de-CH', { maximumFractionDigits: 2 })
@@ -41,6 +41,7 @@ function HelperTradeDetailContent({ tradeId, helperId }: { tradeId: string; help
   const [ownOffer, setOwnOffer] = useState<{ id: string; price_chf: number; proposed_at: string | null } | null>(null)
   const [payout, setPayout] = useState<number | null>(null)
   const [reportingDone, setReportingDone] = useState(false)
+  const [address, setAddress] = useState<TradeAddress | null>(null)
 
   useEffect(() => {
     let active = true
@@ -57,6 +58,8 @@ function HelperTradeDetailContent({ tradeId, helperId }: { tradeId: string; help
       const { data: offer } = await supabase.from('offers').select('id, price_chf, proposed_at').eq('trade_id', data.id).eq('helper_id', helperId).maybeSingle<{ id: string; price_chf: number; proposed_at: string | null }>()
       if (active) setOwnOffer(offer)
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.client_id).maybeSingle<Profile>()
+      const { data: tradeAddress } = await supabase.from('trade_addresses').select('trade_id, street, zip, city').eq('trade_id', data.id).maybeSingle<TradeAddress>()
+      if (active) setAddress(tradeAddress)
       if (data.status === 'abgeschlossen') {
         const { data: payment } = await supabase.from('payments').select('payout_chf').eq('trade_id', data.id).maybeSingle<{ payout_chf: number }>()
         if (active) setPayout(payment?.payout_chf ?? null)
@@ -120,6 +123,7 @@ function HelperTradeDetailContent({ tradeId, helperId }: { tradeId: string; help
           <p><MapPin size={20} aria-hidden /><span>{trade.is_remote ? 'Überall · Remote' : trade.location ?? 'Ort offen'}</span></p>
           <p><Wallet size={20} aria-hidden /><span>Budget CHF {currency.format(trade.budget_chf)}</span></p>
         </div>
+        {!trade.is_remote && trade.status !== 'offen' && (address ? <div className="helper-detail__state helper-detail__state--address"><strong className="text-label">Adresse</strong><span className="text-body">{address.street}<br />{address.zip} {address.city}</span><a className="helper-detail__map-link text-label" href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(`${address.street}, ${address.zip} ${address.city}`)}`} target="_blank" rel="noreferrer"><ExternalLink size={16} aria-hidden /> In Karte öffnen</a></div> : <div className="helper-detail__state"><strong className="text-label">Adresse noch nicht verfügbar</strong><span className="text-caption text-secondary">Die genaue Adresse siehst du, sobald die Zahlung hinterlegt ist.</span></div>)}
         {trade.description && <p className="text-body text-secondary">{trade.description}</p>}
         <Link className="helper-detail__client" to={`/profil/${trade.client_id}`}>
           <span className="helper-detail__avatar text-label">{initials(clientName)}</span>
