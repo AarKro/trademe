@@ -90,3 +90,21 @@
   min-height: var(--size-control-height);
   cursor: pointer;
 }
+
+.trade-detail__confirmation {
+  display: grid;
+  gap: var(--space-stack-xs);
+  margin: 0;
+  padding: var(--space-inset-md);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-subtle);
+}
+
+.trade-detail__confirmation div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-inline-sm);
+}
+
+.trade-detail__confirmation dt { color: var(--color-text-secondary); }
+.trade-detail__confirmation dd { margin: 0; text-align: end; overflow-wrap: anywhere; }

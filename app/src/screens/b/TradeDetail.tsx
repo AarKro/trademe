@@ -1,5 +1,5 @@
 import { Calendar, CircleCheck, Ellipsis, ShieldQuestion, Star } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { TradePhoto } from '../../components/TradePhoto'
 import { AppBar } from '../../components/AppBar'
@@ -8,20 +8,23 @@ import { Button } from '../../components/Button'
 import { TradeLifecycle } from './TradeLifecycle'
 import { useAuth } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
-import type { Offer, Profile, Trade } from '../../lib/types'
+import type { Offer, Profile, Trade, TradeAddress } from '../../lib/types'
 import loopi from './assets/loopi.svg'
 import { TradeProgress } from './TradeProgress'
 import './TradeDetail.css'
 
 type OpenOffer = Pick<Offer, 'id' | 'helper_id' | 'price_chf' | 'proposed_at' | 'message'> & {
-  helper: Pick<Profile, 'display_name' | 'avatar_url' | 'is_verified'> | null
+  helper: Pick<Profile, 'display_name' | 'avatar_url' | 'is_verified' | 'accepted_payment_methods'> | null
 }
 type Rating = { id: string; rating_avg: number; rating_count: number }
-type Detail = { trade: Trade; offers: OpenOffer[]; ratings: Rating[] }
+type Address = Pick<TradeAddress, 'street' | 'zip' | 'city'>
+type Detail = { trade: Trade; offers: OpenOffer[]; ratings: Rating[]; address?: Address | null }
 
 const currency = new Intl.NumberFormat('de-CH', { maximumFractionDigits: 2 })
 const date = new Intl.DateTimeFormat('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit' })
 const time = new Intl.DateTimeFormat('de-CH', { hour: '2-digit', minute: '2-digit' })
+const confirmationDate = new Intl.DateTimeFormat('de-CH', { dateStyle: 'full', timeZone: 'Europe/Zurich' })
+const confirmationTime = new Intl.DateTimeFormat('de-CH', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Zurich' })
 const ratingNumber = new Intl.NumberFormat('de', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
 async function loadDetail(tradeId: string, userId: string, signal: AbortSignal): Promise<Detail | null> {
@@ -32,23 +35,27 @@ async function loadDetail(tradeId: string, userId: string, signal: AbortSignal):
   if (trade.status !== 'offen') return { trade, offers: [], ratings: [] }
 
   const { data: offers, error: offerError } = await supabase.from('offers')
-    .select('id, helper_id, price_chf, proposed_at, message, helper:profiles!offers_helper_id_fkey(display_name, avatar_url, is_verified)')
+    .select('id, helper_id, price_chf, proposed_at, message, helper:profiles!offers_helper_id_fkey(display_name, avatar_url, is_verified, accepted_payment_methods)')
     .eq('trade_id', trade.id).eq('status', 'offen').order('created_at').order('id')
     .abortSignal(signal).overrideTypes<OpenOffer[], { merge: false }>()
   if (offerError) throw offerError
   if (!offers.length) return { trade, offers, ratings: [] }
 
-  const { data: ratings, error: ratingError } = await supabase.from('profile_stats')
-    .select('id, rating_avg, rating_count').in('id', offers.map((offer) => offer.helper_id))
-    .abortSignal(signal).overrideTypes<Rating[], { merge: false }>()
+  const [{ data: ratings, error: ratingError }, { data: address }] = await Promise.all([
+    supabase.from('profile_stats').select('id, rating_avg, rating_count').in('id', offers.map((offer) => offer.helper_id))
+      .abortSignal(signal).overrideTypes<Rating[], { merge: false }>(),
+    trade.is_remote ? Promise.resolve({ data: null }) : supabase.from('trade_addresses').select('street, zip, city')
+      .eq('trade_id', trade.id).abortSignal(signal).maybeSingle<Address>(),
+  ])
   if (ratingError) throw ratingError
-  return { trade, offers, ratings }
+  return { trade, offers, ratings, address }
 }
 
-function OfferCard({ offer, rating, tradeId, onDecline }: {
+function OfferCard({ offer, rating, tradeId, onAccept, onDecline }: {
   offer: OpenOffer
   rating?: Rating
   tradeId: string
+  onAccept: () => void
   onDecline: () => void
 }) {
   const navigate = useNavigate()
@@ -56,7 +63,6 @@ function OfferCard({ offer, rating, tradeId, onDecline }: {
   const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map((word) => [...word][0]).join('').toUpperCase()
   const verified = offer.helper?.is_verified
   const proposed = offer.proposed_at ? new Date(offer.proposed_at) : null
-  const checkout = '/trades/' + tradeId + '/checkout?' + new URLSearchParams({ offerId: offer.id })
   const chat = '/chat/' + tradeId + '/' + offer.helper_id
   const count = rating?.rating_count ?? 0
   return (
@@ -87,13 +93,65 @@ function OfferCard({ offer, rating, tradeId, onDecline }: {
         </div>
         {offer.message && <p className="text-body text-secondary trade-detail__message">{offer.message}</p>}
         <div className="trade-detail__actions">
-          <Button onClick={() => navigate(checkout)}>Annehmen</Button>
+          <Button aria-haspopup="dialog" onClick={onAccept}>Annehmen</Button>
           {/* 1 primary per card; chat and decline as quiet text actions (UX review #52) */}
           <Button variant="text" onClick={() => navigate(chat)}>Chatten</Button>
           <Button variant="text" onClick={onDecline}>Ablehnen</Button>
         </div>
       </div>
     </article>
+  )
+}
+
+function ConfirmOffer({ offer, detail, onClose, onRefresh }: {
+  offer: OpenOffer
+  detail: Detail
+  onClose: () => void
+  onRefresh: () => void
+}) {
+  const submitting = useRef(false)
+  const [busy, setBusy] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const { trade, address } = detail
+  const cashAvailable = trade.payment_methods.includes('bar') && Boolean(offer.helper?.accepted_payment_methods.includes('bar'))
+  const appointment = offer.proposed_at ? new Date(offer.proposed_at) : null
+  const location = trade.is_remote ? 'Remote'
+    : address ? `${address.street}, ${address.zip} ${address.city}` : trade.location || 'Ort noch offen'
+
+  async function accept() {
+    if (!cashAvailable || submitting.current) return
+    submitting.current = true
+    setBusy(true)
+    setFailed(false)
+    try {
+      const { error } = await supabase.rpc('accept_offer', { p_offer_id: offer.id, p_method: 'bar' })
+      if (error) throw error
+      onClose()
+      onRefresh()
+    } catch {
+      setFailed(true)
+      onRefresh()
+    } finally {
+      submitting.current = false
+      setBusy(false)
+    }
+  }
+
+  return (
+    <BottomSheet open title="Angebot annehmen?" onClose={() => { if (!submitting.current) onClose() }}>
+      <dl className="trade-detail__confirmation text-body">
+        <div><dt>Preis</dt><dd className="text-body-strong">CHF {currency.format(offer.price_chf)}</dd></div>
+        <div><dt>Ort</dt><dd>{location}</dd></div>
+        <div><dt>Datum</dt><dd>{appointment ? confirmationDate.format(appointment) : 'Noch offen'}</dd></div>
+        <div><dt>Uhrzeit</dt><dd>{appointment ? confirmationTime.format(appointment) + ' Uhr' : 'Noch offen'}</dd></div>
+      </dl>
+      <p className="text-caption text-secondary">{cashAvailable
+        ? 'Bar vor Ort · ohne Zahlungsschutz'
+        : 'Für dieses Angebot ist keine unterstützte Zahlungsart verfügbar.'}</p>
+      {failed && <p role="alert" className="text-body">Die Annahme konnte nicht bestätigt werden. Prüfe, ob das Angebot noch offen ist.</p>}
+      <Button disabled={!cashAvailable || busy} onClick={() => void accept()}>{busy ? 'Wird angenommen …' : 'Angebot annehmen'}</Button>
+      <Button variant="text" disabled={busy} onClick={onClose}>Abbrechen</Button>
+    </BottomSheet>
   )
 }
 
@@ -154,6 +212,7 @@ function TradeDetailContent({ tradeId, userId }: { tradeId: string; userId: stri
   const [menu, setMenu] = useState<'actions' | 'delete' | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState(false)
+  const [acceptId, setAcceptId] = useState<string | null>(null)
   const [declineId, setDeclineId] = useState<string | null>(null)
   const [declining, setDeclining] = useState(false)
   const [declineError, setDeclineError] = useState(false)
@@ -202,6 +261,7 @@ function TradeDetailContent({ tradeId, userId }: { tradeId: string; userId: stri
     }
   }
 
+  const offerToAccept = detail?.offers.find((offer) => offer.id === acceptId)
   const waiting = detail?.trade.status === 'offen' && detail.offers.length === 0
   return (
     <>
@@ -233,11 +293,13 @@ function TradeDetailContent({ tradeId, userId }: { tradeId: string; userId: stri
             <TradeProgress active={0} hint={`${detail.offers.length} ${detail.offers.length === 1 ? 'Angebot' : 'Angebote'} · Budget CHF ${currency.format(detail.trade.budget_chf)}`} />
             {detail.offers.map((offer) => (
               <OfferCard key={offer.id} offer={offer} rating={detail.ratings.find(({ id }) => id === offer.helper_id)}
-                tradeId={detail.trade.id} onDecline={() => { setDeclineError(false); setDeclineId(offer.id) }} />
+                tradeId={detail.trade.id} onAccept={() => setAcceptId(offer.id)} onDecline={() => { setDeclineError(false); setDeclineId(offer.id) }} />
             ))}
           </section>
         )}
       </main>
+      {detail && offerToAccept && <ConfirmOffer key={offerToAccept.id} offer={offerToAccept} detail={detail}
+        onClose={() => setAcceptId(null)} onRefresh={() => setAttempt((previous) => previous + 1)} />}
       <BottomSheet open={Boolean(declineId)} title="Angebot ablehnen?" onClose={() => { if (!declining) setDeclineId(null) }}>
         <p className="text-body">Die helfende Person wird benachrichtigt. Das Angebot verschwindet aus deiner Liste.</p>
         {declineError && <p className="text-body" role="alert">Das Angebot konnte nicht abgelehnt werden. Versuche es erneut.</p>}
