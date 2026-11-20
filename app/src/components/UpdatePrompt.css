@@ -1,0 +1,34 @@
+/* above the bottom nav (and above the action bar), like a toast */
+.update-prompt {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--size-bottom-nav-height) + var(--space-inset-md) + env(safe-area-inset-bottom));
+  z-index: 10;
+  transform: translateX(-50%);
+  width: calc(min(100%, var(--size-screen-width)) - 2 * var(--space-inset-lg));
+  display: flex;
+  align-items: center;
+  gap: var(--space-stack-xs);
+  padding: var(--space-inset-sm) var(--space-inset-sm) var(--space-inset-sm) var(--space-inset-lg);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-inverse);
+  color: var(--color-text-inverse);
+  box-shadow: var(--shadow-raised);
+}
+.update-prompt__icon {
+  flex: none;
+  width: var(--size-icon-md);
+  height: var(--size-icon-md);
+}
+.update-prompt__text {
+  flex: 1;
+}
+.update-prompt .button {
+  width: auto;
+  flex: none;
+  height: var(--size-text-action-height);
+  padding-inline: var(--space-inset-md);
+}
+.update-prompt .button--text {
+  color: var(--color-text-inverse);
+}

@@ -55,3 +55,13 @@
   flex: none;
   margin-top: var(--space-inset-sm);
 }
+
+.notifications__accepted {
+  padding: var(--space-inset-md);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-accent-subtle);
+}
+
+.notifications__accepted .notification {
+  border-bottom: 0;
+}

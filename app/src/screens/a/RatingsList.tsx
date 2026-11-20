@@ -1,9 +1,13 @@
 import { EyeOff } from 'lucide-react'
+import { useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { Button } from '../../components/Button'
+import { BottomSheet } from '../../components/BottomSheet'
 import { AppBar } from '../../components/AppBar'
 import { Rating, RatingSummary } from '../../components/Rating'
 import { Segmented } from '../../components/Segmented'
 import { Zustand } from '../../components/Zustand'
+import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import { firstName, monthYear, useGivenRatings, useRatings, type GivenRatingRow } from './profileData'
 import { RatingEntry } from './RatingEntry'
@@ -19,7 +23,41 @@ export function RatingsList() {
   const [params, setParams] = useSearchParams()
   const tab: Tab = params.get('tab') === 'abgegeben' ? 'abgegeben' : 'erhalten'
   const received = useRatings(session?.user.id)
-  const given = useGivenRatings(session?.user.id)
+  const [revision, setRevision] = useState(0)
+  const given = useGivenRatings(session?.user.id, revision)
+  const pending = useRef(false)
+  const [mode, setMode] = useState<{ action: 'edit' | 'delete'; rating: GivenRatingRow } | null>(null)
+  const [stars, setStars] = useState(0)
+  const [comment, setComment] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [failed, setFailed] = useState(false)
+
+  function open(action: 'edit' | 'delete', rating: GivenRatingRow) {
+    setStars(rating.stars)
+    setComment(rating.comment ?? '')
+    setFailed(false)
+    setMode({ action, rating })
+  }
+
+  async function save() {
+    if (!mode || pending.current) return
+    pending.current = true
+    setBusy(true)
+    setFailed(false)
+    try {
+      const { error } = mode.action === 'edit'
+        ? await supabase.rpc('edit_own_rating', { p_rating_id: mode.rating.id, p_stars: stars, p_comment: comment })
+        : await supabase.rpc('delete_own_rating', { p_rating_id: mode.rating.id })
+      if (error) throw error
+      setMode(null)
+      setRevision((value) => value + 1)
+    } catch {
+      setFailed(true)
+    } finally {
+      setBusy(false)
+      pending.current = false
+    }
+  }
 
   // The other side rated me for this trade → my rating about them is visible too.
   const ratedBack = new Set(received.map((r) => r.trade_id))
@@ -69,11 +107,29 @@ export function RatingsList() {
             {given.map((r) => (
               <li key={r.id}>
                 <GivenEntry rating={r} hidden={!ratedBack.has(r.trade_id) && !olderThan(r.created_at, HIDDEN_DAYS)} />
+                <div className="profile-rating-card__actions">
+                  <Button variant="text" onClick={() => open('edit', r)}>Bearbeiten</Button>
+                  <Button variant="text" onClick={() => open('delete', r)}>Löschen</Button>
+                </div>
               </li>
             ))}
           </ul>
         )}
       </main>
+      <BottomSheet open={mode !== null} title={mode?.action === 'edit' ? 'Bewertung bearbeiten' : 'Bewertung löschen?'}
+        onClose={() => { if (!busy) setMode(null) }}>
+        {mode?.action === 'edit' ? (
+          <fieldset className="profile-rating-edit" disabled={busy}>
+            <Rating value={stars} onChange={setStars} />
+            <label className="field text-label">Kommentar (optional)
+              <textarea value={comment} maxLength={1000} onChange={(event) => setComment(event.target.value)} />
+            </label>
+          </fieldset>
+        ) : <p className="text-body">Deine Bewertung für diesen Trade wird gelöscht.</p>}
+        {failed && <p className="text-body" role="alert">Die Änderung konnte nicht gespeichert werden. Versuche es erneut.</p>}
+        <Button disabled={busy} onClick={() => void save()}>{mode?.action === 'edit' ? 'Änderungen speichern' : 'Bewertung löschen'}</Button>
+        <Button disabled={busy} variant="text" onClick={() => setMode(null)}>Abbrechen</Button>
+      </BottomSheet>
     </>
   )
 }

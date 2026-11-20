@@ -98,7 +98,7 @@ export interface GivenRatingRow {
 }
 
 /** Ratings the user wrote about others, newest first (A-4 «Abgegeben»). */
-export function useGivenRatings(authorId: string | undefined) {
+export function useGivenRatings(authorId: string | undefined, revision = 0) {
   const [ratings, setRatings] = useState<GivenRatingRow[] | null>(null)
 
   useEffect(() => {
@@ -117,7 +117,7 @@ export function useGivenRatings(authorId: string | undefined) {
         if (!controller.signal.aborted) setRatings(data ?? [])
       })
     return () => controller.abort()
-  }, [authorId])
+  }, [authorId, revision])
 
   return ratings
 }
