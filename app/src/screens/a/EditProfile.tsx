@@ -253,7 +253,7 @@ function EditForm({ profile }: { profile: Profile }) {
         </div>
 
         <div className="field">
-          <p className="text-label">Akzeptierte Zahlungsarten *</p>
+          <p className="text-label">Zahlungsvorauswahl für neue Trades *</p>
           <ul className="chips">
             {allMethods.map((method) => {
               const on = methods.includes(method)
@@ -275,7 +275,7 @@ function EditForm({ profile }: { profile: Profile }) {
           {errors.methods ? (
             <FieldError text={errors.methods} />
           ) : (
-            <p className="text-caption text-secondary">Bei Bar gibt es keinen Zahlungsschutz.</p>
+            <p className="text-caption text-secondary">Wird beim Erstellen vorausgewählt und kann pro Trade angepasst werden. Bei Bar gibt es keinen Zahlungsschutz.</p>
           )}
         </div>
 
