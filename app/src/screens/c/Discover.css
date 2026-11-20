@@ -4,7 +4,7 @@
 .discover-chip--active { color: var(--color-text-accent); border-color: var(--color-action-primary); background: var(--color-surface-accent-subtle); }
 .discover-map-wrap { position: relative; height: var(--size-map-height); overflow: hidden; background: var(--color-surface-muted); }
 .discover-map { height: 100%; width: 100%; z-index: 0; }
-.discover-map-note { position: absolute; z-index: 1; bottom: var(--space-inset-sm); left: var(--space-inset-lg); right: var(--space-inset-lg); padding: var(--space-inset-sm); border-radius: var(--radius-control); background: var(--color-surface-default); box-shadow: 0 var(--space-inset-xs) var(--space-inset-md) rgb(13 27 40 / 12%); }
+.discover-map-note { position: absolute; z-index: 1; bottom: var(--space-inset-sm); left: var(--space-inset-lg); right: var(--space-inset-lg); padding: var(--space-inset-sm); border-radius: var(--radius-control); background: var(--color-surface-default); box-shadow: var(--shadow-raised); }
 .discover-list { display: flex; flex-direction: column; gap: var(--space-stack-xs); padding: 0 var(--space-inset-lg) var(--space-inset-lg); }
 .discover-list__heading { display: flex; justify-content: space-between; align-items: center; padding: var(--space-inset-xs) 0; }
 .discover-card { display: flex; align-items: center; gap: var(--space-stack-sm); padding: var(--space-inset-md); border: var(--stroke-default) solid var(--color-border-subtle); border-radius: var(--radius-card); background: var(--color-surface-default); }
@@ -12,14 +12,13 @@
 .discover-card__image img { width: 100%; height: 100%; object-fit: cover; }
 .discover-card__content { min-width: 0; display: flex; flex: 1; flex-direction: column; gap: var(--space-stack-2xs); }
 .discover-card__content h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.discover-empty { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-stack-sm); padding: var(--space-inset-xl); text-align: center; }
-.discover-empty__icon { display: grid; place-items: center; width: var(--size-avatar-md); height: var(--size-avatar-md); color: var(--color-text-accent); border-radius: var(--radius-avatar); background: var(--color-surface-accent-subtle); }
 .discover-status, .discover-error { padding: var(--space-inset-lg); }
 .discover-error { display: flex; flex-direction: column; gap: var(--space-stack-xs); color: var(--color-text-accent); }
 .discover-error button { display: inline-flex; align-items: center; gap: var(--space-inline-xs); width: fit-content; padding: var(--space-inset-xs) 0; border: 0; color: inherit; background: none; cursor: pointer; }
-.discover-filter-scrim { position: fixed; inset: 0; z-index: 4; display: flex; align-items: flex-end; background: rgb(13 27 40 / 35%); }
-.discover-filter-sheet { display: flex; flex-direction: column; gap: var(--space-stack-sm); width: min(100%, var(--size-screen-width)); margin: 0 auto; padding: var(--space-inset-sm) var(--space-inset-lg) var(--space-inset-xl); border-radius: var(--radius-card) var(--radius-card) 0 0; background: var(--color-surface-default); }
-.discover-filter-handle { align-self: center; width: var(--size-sheet-handle); height: var(--stroke-strong); border-radius: var(--radius-badge); background: var(--color-border-default); }
 .discover-filter-fields { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-stack-sm); }
-.discover-filter-toggle { display: flex; align-items: center; gap: var(--space-stack-sm); padding-block: var(--space-inset-xs); }
 .leaflet-control-attribution { font-size: var(--font-size-caption); }
+
+/* no photo → small icon instead of a big grey box (UX review #51) */
+.discover-card__icon { display: grid; flex: none; place-items: center; width: var(--size-avatar-md); height: var(--size-avatar-md); border-radius: var(--radius-control); color: var(--color-icon-subtle); background: var(--color-surface-subtle); }
+.discover-card__icon svg { width: var(--size-icon-md); height: var(--size-icon-md); }
+.discover-card { color: var(--color-text-primary); text-decoration: none; }

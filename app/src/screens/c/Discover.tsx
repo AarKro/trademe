@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
 import { Link } from 'react-router-dom'
-import { MapPin, Navigation, RefreshCw, SlidersHorizontal, X } from 'lucide-react'
+import { Globe, MapPin, Navigation, RefreshCw, SlidersHorizontal, X } from 'lucide-react'
 import { AppBar } from '../../components/AppBar'
+import { BottomSheet } from '../../components/BottomSheet'
+import { Button } from '../../components/Button'
+import { Zustand } from '../../components/Zustand'
+import { useAuth } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
 import type { Trade } from '../../lib/types'
 import 'leaflet/dist/leaflet.css'
@@ -33,16 +37,18 @@ function formatTradeDate(trade: Trade) {
 }
 
 function formatLocation(trade: Trade) {
-  if (trade.is_remote) return 'Überall · Remote'
+  if (trade.is_remote) return 'Remote'
   return trade.location ?? 'Ort offen'
 }
 
 function TradeCard({ trade }: { trade: Trade }) {
   return (
     <Link className="discover-card" to={`/auftraege/${trade.id}`}>
-      <div className="discover-card__image" aria-hidden="true">
-        {trade.photo_urls[0] ? <img src={trade.photo_urls[0]} alt="" /> : <MapPin size={24} />}
-      </div>
+      {trade.photo_urls[0] ? (
+        <div className="discover-card__image" aria-hidden="true"><img src={trade.photo_urls[0]} alt="" /></div>
+      ) : (
+        <div className="discover-card__icon" aria-hidden="true">{trade.is_remote ? <Globe /> : <MapPin />}</div>
+      )}
       <div className="discover-card__content">
         <h2 className="text-h3">{trade.title}</h2>
         <p className="text-caption text-secondary">{formatLocation(trade)} · {formatTradeDate(trade)}</p>
@@ -52,17 +58,21 @@ function TradeCard({ trade }: { trade: Trade }) {
   )
 }
 
-function EmptyState() {
+function EmptyState({ filtered, onReset }: { filtered: boolean; onReset: () => void }) {
   return (
-    <div className="discover-empty">
-      <div className="discover-empty__icon"><MapPin size={28} /></div>
-      <h2 className="text-h3">Noch keine passenden Trades</h2>
-      <p className="text-body text-secondary">Sobald jemand in deiner Umgebung Hilfe sucht, erscheint der Trade hier.</p>
-    </div>
+    <Zustand
+      mascot="loopi"
+      title={filtered ? 'Nichts mit diesen Filtern' : 'Gerade keine Aufträge'}
+      text={filtered ? 'Versuch einen grösseren Umkreis oder einen anderen Preis.' : 'Sobald jemand in deiner Umgebung Hilfe sucht, erscheint der Auftrag hier.'}
+    >
+      {filtered && <Button onClick={onReset}>Filter zurücksetzen</Button>}
+    </Zustand>
   )
 }
 
 export function Discover() {
+  const { session } = useAuth()
+  const me = session?.user.id
   const [trades, setTrades] = useState<Trade[]>([])
   const [remoteOnly, setRemoteOnly] = useState(false)
   const [priceMin, setPriceMin] = useState('')
@@ -85,7 +95,7 @@ export function Discover() {
       .eq('status', 'offen')
       .order('created_at', { ascending: false })
 
-    if (queryError) setError('Trades konnten nicht geladen werden.')
+    if (queryError) setError('Aufträge konnten nicht geladen werden.')
     setTrades((data as Trade[] | null) ?? [])
     setLoading(false)
   }
@@ -93,12 +103,14 @@ export function Discover() {
   useEffect(() => { void loadTrades() }, [])
 
   const visibleTrades = useMemo(() => trades.filter((trade) => {
+    if (trade.client_id === me) return false
+    if (trade.wanted_until && Date.parse(trade.wanted_until) < Date.now()) return false
     if (remoteOnly && !trade.is_remote) return false
     if (priceMin && trade.budget_chf < Number(priceMin)) return false
     if (priceMax && trade.budget_chf > Number(priceMax)) return false
     if (!trade.is_remote && userLocation && (trade.lat === null || trade.lng === null || distanceKm(userLocation, { lat: trade.lat, lng: trade.lng }) > radius)) return false
     return true
-  }), [priceMax, priceMin, radius, remoteOnly, trades, userLocation])
+  }), [me, priceMax, priceMin, radius, remoteOnly, trades, userLocation])
   const mapTrades = visibleTrades.filter((trade) => trade.lat !== null && trade.lng !== null)
   const remoteTrades = visibleTrades.filter((trade) => trade.is_remote)
   const localTrades = [...visibleTrades.filter((trade) => !trade.is_remote)].sort((a, b) => {
@@ -108,8 +120,10 @@ export function Discover() {
     return distanceKm(userLocation, { lat: a.lat, lng: a.lng }) - distanceKm(userLocation, { lat: b.lat, lng: b.lng })
   })
   const center: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : zurich
+  const filtered = remoteOnly || Boolean(priceMin || priceMax) || Boolean(userLocation)
+  const resetFilters = () => { setRemoteOnly(false); setPriceMin(''); setPriceMax(''); setUserLocation(null) }
 
-  function useMyLocation() {
+  function requestLocation() {
     if (!navigator.geolocation) { setLocationError('Dein Browser unterstützt keinen Standort.'); return }
     navigator.geolocation.getCurrentPosition(({ coords }) => { setLocationError(null); setUserLocation({ lat: coords.latitude, lng: coords.longitude }) }, () => setLocationError('Standort konnte nicht abgerufen werden.'))
   }
@@ -119,29 +133,28 @@ export function Discover() {
       <AppBar title="Entdecken" />
       <main className="discover-screen">
         <div className="discover-filters" aria-label="Filter">
-          <button className={`discover-chip ${!remoteOnly ? 'discover-chip--active' : ''}`} onClick={() => setRemoteOnly(false)}>
-            <MapPin size={16} aria-hidden /> Kreis 4 · 5 km
+          <button className={`discover-chip ${userLocation && !remoteOnly ? 'discover-chip--active' : ''}`} onClick={() => { setRemoteOnly(false); if (!userLocation) requestLocation() }}>
+            <Navigation size={16} aria-hidden /> {userLocation ? `Mein Standort · ${radius} km` : 'In der Nähe'}
           </button>
-          <button className={`discover-chip ${remoteOnly ? 'discover-chip--active' : ''}`} onClick={() => setRemoteOnly(true)}>
-            <Navigation size={16} aria-hidden /> Überall
+          {userLocation && !remoteOnly && [2, 5, 10].filter((value) => value !== radius).map((value) => <button key={value} className="discover-chip" onClick={() => setRadius(value)}>{value} km</button>)}
+          <button className={`discover-chip ${remoteOnly ? 'discover-chip--active' : ''}`} onClick={() => setRemoteOnly(!remoteOnly)}>
+            <Globe size={16} aria-hidden /> Remote
           </button>
           <button className={`discover-chip ${priceMin || priceMax ? 'discover-chip--active' : ''}`} onClick={() => { setDraftMin(priceMin); setDraftMax(priceMax); setFilterOpen(true) }}>
-            <SlidersHorizontal size={16} aria-hidden /> Preis
+            <SlidersHorizontal size={16} aria-hidden /> {priceMin || priceMax ? `CHF ${priceMin || 0}–${priceMax || '…'}` : 'Preis'}
           </button>
-          {(priceMin || priceMax) && <button className="discover-chip" onClick={() => { setPriceMin(''); setPriceMax('') }}><X size={16} aria-hidden /> Preis zurücksetzen</button>}
-          <button className="discover-chip" onClick={useMyLocation}><Navigation size={16} aria-hidden /> Meinen Standort verwenden</button>
-          {userLocation && [2, 5, 10].map((value) => <button key={value} className={`discover-chip ${radius === value ? 'discover-chip--active' : ''}`} onClick={() => setRadius(value)}>{value} km</button>)}
+          {filtered && <button className="discover-chip" onClick={resetFilters} aria-label="Alle Filter zurücksetzen"><X size={16} aria-hidden /> Zurücksetzen</button>}
         </div>
         {locationError && <p className="discover-error text-caption" role="alert">{locationError}</p>}
 
-        {loading && <p className="text-body text-secondary discover-status">Trades werden geladen …</p>}
+        {loading && <p className="text-body text-secondary discover-status">Aufträge werden geladen …</p>}
         {error && <div className="discover-error text-body" role="alert">{error}<button onClick={() => void loadTrades()}><RefreshCw size={16} /> Erneut versuchen</button></div>}
 
-        {!loading && !error && visibleTrades.length === 0 && <EmptyState />}
+        {!loading && !error && visibleTrades.length === 0 && <EmptyState filtered={filtered} onReset={resetFilters} />}
 
         {!loading && !error && visibleTrades.length > 0 && (
           <>
-            <section className="discover-map-wrap" aria-label="Karte mit offenen Trades">
+            <section className="discover-map-wrap" aria-label="Karte mit offenen Aufträgen">
               <MapContainer center={center} zoom={12} scrollWheelZoom={false} className="discover-map">
                 <RecenterMap center={center} />
                 <TileLayer attribution="&copy; OpenStreetMap" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -152,17 +165,23 @@ export function Discover() {
                   </Marker>
                 ))}
               </MapContainer>
-              {mapTrades.length === 0 && <p className="discover-map-note text-caption">Trades ohne Standort findest du unten in der Liste.</p>}
+              {mapTrades.length === 0 && <p className="discover-map-note text-caption">Aufträge ohne Standort findest du unten in der Liste.</p>}
             </section>
             <section className="discover-list" aria-labelledby="discover-list-title">
-              <div className="discover-list__heading"><h2 id="discover-list-title" className="text-label">{visibleTrades.length} {visibleTrades.length === 1 ? 'Trade' : 'Trades'} verfügbar</h2><span className="text-caption text-secondary">Nach Distanz</span></div>
+              <div className="discover-list__heading"><h2 id="discover-list-title" className="text-label">{visibleTrades.length} {visibleTrades.length === 1 ? 'Auftrag' : 'Aufträge'}</h2>{userLocation && <span className="text-caption text-secondary">Nach Distanz</span>}</div>
               {localTrades.map((trade) => <TradeCard key={trade.id} trade={trade} />)}
               {remoteTrades.length > 0 && <><h2 className="text-label discover-list__section-title">Remote</h2>{remoteTrades.map((trade) => <TradeCard key={trade.id} trade={trade} />)}</>}
             </section>
           </>
         )}
       </main>
-      {filterOpen && <div className="discover-filter-scrim" role="presentation" onClick={() => setFilterOpen(false)}><section className="discover-filter-sheet" role="dialog" aria-modal="true" aria-labelledby="filter-title" onClick={(event) => event.stopPropagation()}><div className="discover-filter-handle" /><h2 id="filter-title" className="text-h3">Filter</h2><p className="text-caption text-secondary">Preisbereich und Remote-Aufträge</p><div className="discover-filter-fields"><label className="field"><span className="text-label">Min. CHF</span><input className="input" type="number" min="0" value={draftMin} onChange={(event) => setDraftMin(event.target.value)} placeholder="0" /></label><label className="field"><span className="text-label">Max. CHF</span><input className="input" type="number" min="0" value={draftMax} onChange={(event) => setDraftMax(event.target.value)} placeholder="offen" /></label></div><label className="discover-filter-toggle"><input type="checkbox" checked={remoteOnly} onChange={(event) => setRemoteOnly(event.target.checked)} /><span className="text-label">Nur Remote-Aufträge</span></label><button className="button button--primary text-body-strong" onClick={() => { setPriceMin(draftMin); setPriceMax(draftMax); setFilterOpen(false) }}>Filter anwenden</button></section></div>}
+      <BottomSheet open={filterOpen} title="Preis" onClose={() => setFilterOpen(false)}>
+        <div className="discover-filter-fields">
+          <label className="field"><span className="text-label">Min. CHF</span><input className="input" type="number" min="0" inputMode="numeric" value={draftMin} onChange={(event) => setDraftMin(event.target.value)} placeholder="0" /></label>
+          <label className="field"><span className="text-label">Max. CHF</span><input className="input" type="number" min="0" inputMode="numeric" value={draftMax} onChange={(event) => setDraftMax(event.target.value)} placeholder="offen" /></label>
+        </div>
+        <Button onClick={() => { setPriceMin(draftMin); setPriceMax(draftMax); setFilterOpen(false) }}>Anwenden</Button>
+      </BottomSheet>
     </>
   )
 }

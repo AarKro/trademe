@@ -9,10 +9,11 @@ const clock = new Intl.DateTimeFormat('de-CH', { hour: '2-digit', minute: '2-dig
 /**
  * When the client wants the job done (trades.wanted_from / wanted_until, set in B/01).
  * B stores a day without time as 00:00 (start) and 23:59 (end), so those times are left out.
- * «ab Mi., 02.12., 09:00» · «Mi., 02.12. – Fr., 04.12.» · «Mi., 02.12., 09:00–12:00»
+ * «ab Mi., 02.12., 09:00» · «ab sofort» · «Mi., 02.12. – Fr., 04.12.» · «Mi., 02.12., 09:00–12:00»
  */
 export function formatWanted(from: string, until: string | null) {
   const start = new Date(from)
+  if (!until && start.getTime() < Date.now()) return 'ab sofort'
   const startTime = clock.format(start)
   const startText = startTime === '00:00' ? day.format(start) : `${day.format(start)}, ${startTime}`
   if (!until) return `ab ${startText}`
