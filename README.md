@@ -118,4 +118,10 @@ The full mapping of every V4 frame is in `app/src/screens/registry.ts`.
 ### Simplifications (school project)
 - Stripe charges right away. The "hold until release" exists only in our database, and payouts to helpers are not real.
 - «Geprüft» (verified) = `profiles.is_verified`, set by hand in the Supabase Table Editor.
-- Notifications are in-app (`notifications` table, live via Realtime), not push.
+- Notifications are in-app (`notifications` table, live via Realtime) **and** Web Push on devices that switched it on (see below).
+
+### Push notifications (Web Push)
+- In the app: **Benachrichtigungen → «Aktivieren»** registers the device (`push_subscriptions`). iPhone/iPad: only in the installed app (Safari → Share → Add to Home Screen, iOS 16.4+). Android/desktop: also in the browser.
+- Every new notification (and every new chat message) makes the database call `/api/send-push` (trigger `push_notification`, via `pg_net`), which sends the push. Tapping it opens the right screen.
+- Vercel env vars: `SUPABASE_SERVICE_ROLE_KEY` and `VAPID_PRIVATE_KEY` (secret, Aaron has it). The public key is `VITE_VAPID_PUBLIC_KEY` in `app/.env`.
+- The installed app also shows the number of unread notifications on its icon.

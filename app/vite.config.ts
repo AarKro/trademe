@@ -29,6 +29,8 @@ export default defineConfig({
       workbox: {
         // never serve the Vercel API routes from the cache
         navigateFallbackDenylist: [/^\/api\//],
+        // push + notification click handlers (public/push-sw.js)
+        importScripts: ['push-sw.js'],
       },
     }),
   ],

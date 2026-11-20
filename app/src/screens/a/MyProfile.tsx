@@ -9,7 +9,7 @@ import { HinweisTag } from '../../components/HinweisTag'
 import { RatingSummary } from '../../components/Rating'
 import { Toast } from '../../components/Toast'
 import { useAuth } from '../../lib/auth'
-import { supabase } from '../../lib/supabase'
+import { signOut } from '../../lib/push'
 import type { Profile } from '../../lib/types'
 import { memberSince, paymentLabels, useProfile, useRatings, type RatingRow } from './profileData'
 import { RatingEntry } from './RatingEntry'
@@ -109,7 +109,7 @@ export function MyProfile() {
                 <ChevronRight className="profile-progress__chevron" aria-hidden />
               </Link>
             </nav>
-            <Button variant="text" onClick={() => supabase.auth.signOut()}>
+            <Button variant="text" onClick={() => signOut()}>
               Abmelden
             </Button>
           </>

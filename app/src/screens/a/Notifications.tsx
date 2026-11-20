@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { AppBar } from '../../components/AppBar'
+import { PushToggle } from '../../components/PushToggle'
 import { Zustand } from '../../components/Zustand'
 import { useNotifications } from '../../lib/notifications'
 import type { Notification, NotificationKind } from '../../lib/types'
@@ -59,6 +60,7 @@ export function Notifications() {
         }
       />
       <main className="screen notifications">
+        <PushToggle />
         {!loading && items.length === 0 && (
           <Zustand
             mascot="plaudi"
