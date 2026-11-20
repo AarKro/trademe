@@ -92,7 +92,7 @@ export function RateTrade() {
   const iAmClient = trade.client_id === me
   const other = (iAmClient ? trade.helper : trade.client) ?? { id: '', display_name: 'Unbekannt' }
 
-  if (sent || load.alreadyRated) return <RatingSent other={other} again={!sent} />
+  if (sent || load.alreadyRated) return <RatingSent tradeId={trade.id} other={other} again={!sent} />
 
   if (trade.status !== 'abgeschlossen')
     return (
@@ -215,9 +215,28 @@ function RatingForm({
 }
 
 /** A/13 Bewertung gesendet – Erfolg */
-function RatingSent({ other, again }: { other: Person; again: boolean }) {
+function RatingSent({ tradeId, other, again }: { tradeId: string; other: Person; again: boolean }) {
   const navigate = useNavigate()
   const first = firstName(other.display_name)
+  // Once I have rated, the database shows me the other person's rating about me (if there is one).
+  const [ratedBack, setRatedBack] = useState(false)
+
+  useEffect(() => {
+    if (!other.id) return
+    const controller = new AbortController()
+    supabase
+      .from('ratings')
+      .select('id')
+      .eq('trade_id', tradeId)
+      .eq('author_id', other.id)
+      .abortSignal(controller.signal)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!controller.signal.aborted) setRatedBack(Boolean(data))
+      })
+    return () => controller.abort()
+  }, [tradeId, other.id])
+
   return (
     <>
       <AppBar title="Bewertung" back />
@@ -225,7 +244,11 @@ function RatingSent({ other, again }: { other: Person; again: boolean }) {
         <Zustand
           mascot="plaudi"
           title={again ? 'Schon bewertet' : 'Danke für deine Bewertung!'}
-          text={`Sie erscheint in ${possessive(first)} Profil, sobald ${first} dich auch bewertet hat – spätestens in 14 Tagen.`}
+          text={
+            ratedBack
+              ? `Ihr habt euch beide bewertet. Deine Bewertung ist jetzt in ${possessive(first)} Profil sichtbar, ${possessive(first)} Bewertung in deinem.`
+              : `Sie erscheint in ${possessive(first)} Profil, sobald ${first} dich auch bewertet hat – spätestens in 14 Tagen.`
+          }
         />
       </main>
       <ActionBar>

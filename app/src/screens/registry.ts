@@ -143,6 +143,13 @@ export const screens: ScreenDef[] = [
     frames: [{ id: '447:5509', name: 'A/16 Eigenes Profil bearbeiten' }],
   },
   {
+    path: '/profil/bewertungen',
+    title: 'Bewertungen (erhalten / abgegeben)',
+    owner: 'A',
+    frames: [],
+    note: 'Runde 5 · A-4. Kein eigenes Figma-Frame; Bewertungs-Zeilen wie in A/10. ?tab=abgegeben öffnet den zweiten Tab.',
+  },
+  {
     path: '/profil/:userId',
     title: 'Profil',
     owner: 'A',

@@ -51,7 +51,7 @@ Priorität: **P1** = Lücke im Ablauf, **P2** = unklar/schlecht sichtbar, **P3**
   Glocke mit Zähler in der App-Bar der Tab-Roots (oder Punkt auf dem Bottom-Nav-Tab), neuer Screen `/benachrichtigungen` (Liste: Text, Zeit, ungelesen fett, Tipp → zum Trade/Chat, alles gelesen setzen). Live über Realtime. Ungelesene Chats zusätzlich als Punkt auf dem Tab «Chat». Route in `registry.ts` als Owner A eintragen. Gemeinsame Dateien (`AppBar`, `BottomNav`, `TabLayout`) → im PR erwähnen.
 - [x] **A-3 (P1) Erhaltene Bewertungen im eigenen Profil** 🟢
   In `/profil` die erhaltenen Bewertungen direkt anzeigen (die neuesten 3 + «Alle ansehen»), nicht nur den Link aufs öffentliche Profil. Die Regel «verdeckt bis zur Gegenbewertung» (#13) gilt weiter.
-- [ ] **A-4 (P2) Liste «Erhalten / Abgegeben»** 🟢
+- [x] **A-4 (P2) Liste «Erhalten / Abgegeben»** 🟢
   Neuer Screen `/profil/bewertungen` mit Umschalter «Erhalten» | «Abgegeben». Abgegebene zeigen Person, Trade, Sterne und den Hinweis «noch verdeckt», solange die Gegenseite nicht bewertet hat.
 - [ ] **A-5 (P2) Bewertung erreichbar für Helfende** 🟢 *(mit C absprechen, C-Datei)*
   Prüfen, dass A/14 aus C/09 und aus Benachrichtigungen erreichbar ist. Falls C es nicht in C-2 macht, gibt A dem C-Agent den Link.
