@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AppBar } from '../../components/AppBar'
 import { Button } from '../../components/Button'
+import { Segmented } from '../../components/Segmented'
 import { StatusBadge } from '../../components/StatusBadge'
 import { useAuth } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
@@ -67,9 +68,12 @@ function describeOffer(offer: SentOffer) {
     id: offer.id,
     title: trade?.title ?? 'Auftrag nicht verfügbar',
     photo: trade?.photo_urls[0],
-    badge: <span className="text-label">{offerLabels[offer.status]}</span>,
+    // same badge look as «Meine Trades» (UX review #52): accepted offers show the trade status
+    badge: offer.status === 'angenommen' && trade
+      ? <StatusBadge status={trade.status} />
+      : <span className={`status-badge status-badge--${offer.status === 'offen' ? 'offen' : 'storniert'} text-label`}>{offer.status === 'offen' ? 'Angebot offen' : offerLabels[offer.status]}</span>,
     group,
-    meta: 'Offerte CHF ' + francs.format(offer.price_chf),
+    meta: 'Dein Angebot CHF ' + francs.format(offer.price_chf),
     next: group === 'Handlung nötig' ? 'Auftrag ansehen' : '',
     href: '/auftraege/' + offer.trade_id,
   }
@@ -138,10 +142,8 @@ export function MyTrades() {
     <>
       <AppBar title="Trades" />
       <main className="screen my-trades">
-        <div className="my-trades__switch" role="group" aria-label="Ansicht">
-          <Button variant={view === 'trades' ? 'primary' : 'secondary'} aria-pressed={view === 'trades'} onClick={() => setView('trades')}>Meine Trades</Button>
-          <Button variant={view === 'offers' ? 'primary' : 'secondary'} aria-pressed={view === 'offers'} onClick={() => setView('offers')}>Meine Angebote</Button>
-        </div>
+        <Segmented label="Ansicht" value={view} onChange={setView}
+          options={[{ value: 'trades', label: 'Meine Trades' }, { value: 'offers', label: 'Meine Angebote' }]} />
         {state.kind === 'loading' && <p role="status" className="text-body">Trades werden geladen …</p>}
         {state.kind === 'error' && (
           <>

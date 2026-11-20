@@ -64,3 +64,6 @@
 .trade-lifecycle__error {
   color: var(--color-feedback-fehler-fg);
 }
+
+/* UX review #52 · «Problem melden» as quiet link in the content */
+.trade-lifecycle__report { align-self: center; }

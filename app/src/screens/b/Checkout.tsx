@@ -172,7 +172,7 @@ function CheckoutContent({ tradeId, offerId, userId }: { tradeId: string; offerI
                 : <span className="checkout__photo"><ImageIcon aria-hidden /></span>}
               <h2 className="text-h3">{agreement.trade.title}</h2>
             </div>}
-            <TradeProgress active={confirmed ? 2 : 1} hint={confirmed ? 'Bezahle vor Ort direkt bei der helfenden Person.' : 'Bestätige die Vereinbarung, damit der Termin eingeplant wird.'} />
+            <TradeProgress active={confirmed ? 2 : 1} hint={confirmed ? 'Bezahle vor Ort direkt bei der helfenden Person.' : 'Wähle, wie du bezahlst. Danach ist der Termin fix.'} />
             <section className="card checkout__card" aria-label="Zusammenfassung">
               <h2 className="text-h3">Zusammenfassung</h2>
               <p className="text-body">Übernommen aus dem Angebot von {name}</p>
@@ -199,14 +199,12 @@ function CheckoutContent({ tradeId, offerId, userId }: { tradeId: string; offerI
               </div>
               <div className="checkout__total"><span className="text-label text-secondary">Preis</span>
                 <strong className="text-numeric">{price}</strong></div>
-              <p className="text-body">Gebühr für dich: CHF 0</p>
-              <p className="text-body">{cancellation}</p>
+              {/* Policy only as a deadline, details in the AGB sheet (UX review #52) */}
+              <p className="text-caption text-secondary">
+                Keine Gebühr für dich · {proposed ? `gratis stornierbar bis ${dateTime.format(new Date(proposed.getTime() - 48 * 60 * 60 * 1000))}` : 'gratis stornierbar bis 48 h vor dem Termin'}
+              </p>
+              <Button variant="text" onClick={() => setTermsOpen(true)}>Zahlungsregeln</Button>
             </section>
-            <div className="checkout__actions">
-              <p className="text-body">Bei Barzahlung bezahlst du direkt vor Ort. Es gibt keinen Zahlungsschutz.</p>
-              <p className="text-body">Bei TWINT oder Karte wird das Geld bei TradeMe hinterlegt und erst nach deiner Freigabe ausgezahlt.</p>
-              <Button variant="text" onClick={() => setTermsOpen(true)}>AGB</Button>
-            </div>
             <BottomSheet open={termsOpen} onClose={() => setTermsOpen(false)} title="AGB · Die wichtigsten Regeln">
               <ol className="checkout__rules text-body">
                 <li>Bei TWINT und Karte wird das Geld bis zur Freigabe hinterlegt. Barzahlung hat keinen Zahlungsschutz.</li>

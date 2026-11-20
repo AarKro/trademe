@@ -1,20 +1,8 @@
-import { Check, Clock } from 'lucide-react'
-import './TradeProgress.css'
+import { StatusTimeline } from '../../components/StatusTimeline'
+import type { TimelineStep } from '../../lib/timeline'
 
-const steps = ['Angebot', 'Zahlung', 'Ausführung', 'Freigabe', 'Bewertung']
-
+// Kept for the existing call sites in B. Uses the shared StatusTimeline so both roles see the
+// same process model (UX review #51/#52). `active` is 0-based (0 = Angebot … 4 = Bewertung).
 export function TradeProgress({ active, hint }: { active: number; hint: string }) {
-  return (
-    <div className="trade-detail__timeline">
-      <ol aria-label="Fortschritt">
-        {steps.map((step, index) => (
-          <li key={step} className="text-caption" data-complete={index < active}
-            aria-current={index === active ? 'step' : undefined}>
-            <span aria-hidden>{index < active && <Check />}</span>{step}
-          </li>
-        ))}
-      </ol>
-      <p className="text-label"><Clock aria-hidden />{hint}</p>
-    </div>
-  )
+  return <StatusTimeline step={Math.min(Math.max(active + 1, 1), 6) as TimelineStep} deadline={hint} />
 }
