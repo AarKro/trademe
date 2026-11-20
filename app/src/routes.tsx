@@ -11,7 +11,7 @@ import { MyProfile } from './screens/a/MyProfile'
 import { PublicProfile } from './screens/a/PublicProfile'
 import { RateTrade } from './screens/a/RateTrade'
 import { Checkout } from './screens/b/Checkout'
-import { CreateTrade } from './screens/b/CreateTrade'
+import { CreateTrade, EditTrade } from './screens/b/CreateTrade'
 import { MyTrades } from './screens/b/MyTrades'
 import { TradeDetail } from './screens/b/TradeDetail'
 import { Discover } from './screens/c/Discover'
@@ -44,6 +44,7 @@ export const router = createBrowserRouter([
         element: <TabLayout />,
         children: [
           { index: true, element: <Navigate to="/entdecken" replace /> },
+          { path: '/trades/:tradeId/bearbeiten', element: <EditTrade /> },
           ...screens.map((s) => ({ path: s.path, element: built[s.path] ?? <ScreenStub screen={s} /> })),
           { path: '/dev', element: <DevIndex /> },
           { path: '/dev/components', element: <DevComponents /> },

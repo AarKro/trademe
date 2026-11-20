@@ -1,7 +1,8 @@
-import { Calendar, CircleCheck, Image as ImageIcon, ShieldQuestion, Star } from 'lucide-react'
+import { Calendar, CircleCheck, Image as ImageIcon, Ellipsis, ShieldQuestion, Star } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AppBar } from '../../components/AppBar'
+import { BottomSheet } from '../../components/BottomSheet'
 import { Button } from '../../components/Button'
 import { TradeLifecycle } from './TradeLifecycle'
 import { useAuth } from '../../lib/auth'
@@ -149,6 +150,10 @@ export function TradeDetail() {
 }
 
 function TradeDetailContent({ tradeId, userId }: { tradeId: string; userId: string }) {
+  const navigate = useNavigate()
+  const [menu, setMenu] = useState<'actions' | 'delete' | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState(false)
   const [attempt, setAttempt] = useState(0)
   const [state, setState] = useState<Detail | null | 'loading' | 'error'>('loading')
 
@@ -162,10 +167,25 @@ function TradeDetailContent({ tradeId, userId }: { tradeId: string; userId: stri
   }, [tradeId, userId, attempt])
 
   const detail = typeof state === 'object' ? state : null
+  async function deleteTrade() {
+    if (deleting) return
+    setDeleting(true)
+    setDeleteError(false)
+    const { error } = await supabase.rpc('delete_trade', { p_trade_id: tradeId })
+    if (error) {
+      setDeleteError(true)
+      setDeleting(false)
+      return
+    }
+    navigate('/trades', { replace: true })
+  }
+
   const waiting = detail?.trade.status === 'offen' && detail.offers.length === 0
   return (
     <>
-      <AppBar back title={detail?.trade.status === 'zur_bestaetigung' ? 'Abschluss prüfen' : waiting || !detail?.offers.length ? 'Mein Trade' : detail.trade.title} />
+      <AppBar back action={detail?.trade.status === 'offen' && (
+        <button className="app-bar__back" type="button" aria-label="Trade-Optionen" onClick={() => setMenu('actions')}><Ellipsis aria-hidden /></button>
+      )} title={detail?.trade.status === 'zur_bestaetigung' ? 'Abschluss prüfen' : waiting || !detail?.offers.length ? 'Mein Trade' : detail.trade.title} />
       <main className="screen trade-detail">
         {state === 'loading' && <p className="text-body" role="status">Trade wird geladen …</p>}
         {state === 'error' && (
@@ -196,6 +216,16 @@ function TradeDetailContent({ tradeId, userId }: { tradeId: string; userId: stri
           </section>
         )}
       </main>
+      <BottomSheet open={menu === 'actions'} title="Trade-Optionen" onClose={() => setMenu(null)}>
+        <Button onClick={() => navigate('/trades/' + tradeId + '/bearbeiten')}>Bearbeiten</Button>
+        <Button variant="secondary" onClick={() => { setDeleteError(false); setMenu('delete') }}>Löschen</Button>
+      </BottomSheet>
+      <BottomSheet open={menu === 'delete'} title="Trade löschen?" onClose={() => { if (!deleting) setMenu(null) }}>
+        <p className="text-body">Dein Trade mit seinen Angeboten und Chats wird endgültig gelöscht.</p>
+        {deleteError && <p className="text-body" role="alert">Der Trade konnte nicht gelöscht werden. Prüfe, ob er noch offen ist.</p>}
+        <Button disabled={deleting} onClick={() => void deleteTrade()}>{deleting ? 'Wird gelöscht …' : 'Trade löschen'}</Button>
+        <Button disabled={deleting} variant="text" onClick={() => setMenu(null)}>Abbrechen</Button>
+      </BottomSheet>
     </>
   )
 }

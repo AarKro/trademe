@@ -68,7 +68,7 @@ Priorität: **P1** = Lücke im Ablauf, **P2** = unklar/schlecht sichtbar, **P3**
   - «Wann» wird Pflicht und steht weiter oben: Auswahl «Ab Zeitpunkt» oder «Zeitspanne von–bis» (`wanted_from`, `wanted_until`).
   - Adresse (Strasse, PLZ, Ort) in `trade_addresses` speichern, mit Hinweis «Die helfende Person sieht die Adresse erst nach der Zahlung». Das grobe Quartier bleibt in `location`.
   - Tags (Chips, frei + Vorschläge) und akzeptierte Zahlungsarten erfassen.
-- [ ] **B-3 (P1) Eigene Trades bearbeiten und löschen** 🟢 bearbeiten / 🔒 löschen
+- [x] **B-3 (P1) Eigene Trades bearbeiten und löschen** 🟢 bearbeiten / 🔒 löschen
   Im Trade-Detail (Status `offen`): Menü in der App-Bar → «Bearbeiten» (gleiches Formular wie Erstellen, vorausgefüllt, `update` auf `trades`) und «Löschen» (Bestätigungs-Sheet → `rpc('delete_trade')`). Nach `vergeben` gibt es nur «Stornieren» (gibt es schon).
 - [ ] **B-4 (P1) «Meine Trades» / «Meine Angebote»** 🟢
   Umschalter oben in `/trades`. «Meine Trades» = Trades, die ich erstellt habe. «Meine Angebote» = Angebote, die ich gesendet habe, mit Status (offen / angenommen / abgelehnt) → Tipp öffnet `/auftraege/:id`. Die Gruppierung «Handlung nötig» bleibt pro Tab.
