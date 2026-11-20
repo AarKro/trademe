@@ -17,6 +17,16 @@ function formatDate(value: string | null) {
   return value ? `${date.format(new Date(value))} · ${time.format(new Date(value))}` : 'Termin flexibel'
 }
 
+function formatTradeDate(trade: Trade) {
+  if (trade.status !== 'offen' || !trade.wanted_from) return formatDate(trade.scheduled_at)
+  const from = new Date(trade.wanted_from)
+  const until = trade.wanted_until ? new Date(trade.wanted_until) : null
+  const date = new Intl.DateTimeFormat('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit' }).format(from)
+  const time = new Intl.DateTimeFormat('de-CH', { hour: '2-digit', minute: '2-digit' }).format(from)
+  if (!until) return `ab ${date}, ${time}`
+  return `${date}–${new Intl.DateTimeFormat('de-CH', { day: '2-digit', month: '2-digit' }).format(until)}`
+}
+
 function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => [...part][0]).join('').toUpperCase()
 }
@@ -122,7 +132,7 @@ function HelperTradeDetailContent({ tradeId, helperId, onAsk }: { tradeId: strin
         {trade.photo_urls[0] ? <img className="helper-detail__hero" src={trade.photo_urls[0]} alt="" /> : <div className="helper-detail__hero helper-detail__hero--empty"><ImageIcon size={32} /></div>}
         <h2 className="helper-detail__title">{trade.title}</h2>
         <div className="helper-detail__facts">
-          <p><Calendar size={20} aria-hidden /><span>{formatDate(trade.scheduled_at)}</span></p>
+          <p><Calendar size={20} aria-hidden /><span>{formatTradeDate(trade)}</span></p>
           <p><MapPin size={20} aria-hidden /><span>{trade.is_remote ? 'Überall · Remote' : trade.location ?? 'Ort offen'}</span></p>
           <p><Wallet size={20} aria-hidden /><span>Budget CHF {currency.format(trade.budget_chf)}</span></p>
         </div>

@@ -25,6 +25,16 @@ function formatDate(value: string | null) {
   return new Intl.DateTimeFormat('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit' }).format(new Date(value))
 }
 
+function formatTradeDate(trade: Trade) {
+  if (trade.status !== 'offen' || !trade.wanted_from) return formatDate(trade.scheduled_at)
+  const from = new Date(trade.wanted_from)
+  const until = trade.wanted_until ? new Date(trade.wanted_until) : null
+  const date = new Intl.DateTimeFormat('de-CH', { day: '2-digit', month: '2-digit' }).format(from)
+  const time = new Intl.DateTimeFormat('de-CH', { hour: '2-digit', minute: '2-digit' }).format(from)
+  if (!until) return `ab ${date}, ${time}`
+  return `${date}–${new Intl.DateTimeFormat('de-CH', { day: '2-digit', month: '2-digit' }).format(until)}`
+}
+
 function formatLocation(trade: Trade) {
   if (trade.is_remote) return 'Überall · Remote'
   return trade.location ?? 'Ort offen'
@@ -38,7 +48,7 @@ function TradeCard({ trade }: { trade: Trade }) {
       </div>
       <div className="discover-card__content">
         <h2 className="text-h3">{trade.title}</h2>
-        <p className="text-caption text-secondary">{formatLocation(trade)} · {formatDate(trade.scheduled_at)}</p>
+        <p className="text-caption text-secondary">{formatLocation(trade)} · {formatTradeDate(trade)}</p>
         <p className="text-body-strong">CHF {trade.budget_chf.toFixed(0)}</p>
       </div>
     </Link>
