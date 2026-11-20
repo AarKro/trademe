@@ -5,6 +5,7 @@
 export type TradeStatus = 'offen' | 'vergeben' | 'zur_bestaetigung' | 'abgeschlossen' | 'problem' | 'storniert'
 export type OfferStatus = 'offen' | 'angenommen' | 'abgelehnt' | 'zurueckgezogen'
 export type PaymentMethod = 'twint' | 'karte' | 'bar'
+export type PaymentStatus = 'offen' | 'hinterlegt' | 'fehlgeschlagen' | 'freigegeben' | 'erstattet'
 
 export interface Profile {
   id: string

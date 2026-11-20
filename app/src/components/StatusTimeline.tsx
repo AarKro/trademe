@@ -1,4 +1,5 @@
 import { Check, Clock } from 'lucide-react'
+import type { TimelineStep } from '../lib/timeline'
 import './StatusTimeline.css'
 
 // Figma: Status-Timeline 420:694 · process of a trade with the active step and the next deadline.
@@ -6,10 +7,11 @@ import './StatusTimeline.css'
 const TIMELINE_STEPS = ['Angebot', 'Zahlung', 'Ausführung', 'Freigabe', 'Bewertung'] as const
 
 /**
- * @param step    active step, 1 = Angebot … 5 = Bewertung
+ * @param step    active step, 1 = Angebot … 5 = Bewertung, 6 = alles erledigt.
+ *                Get it from the trade with `timelineStep()` in lib/timeline.ts.
  * @param deadline e.g. «Freigabe bis 24.11. · sonst automatisch» (optional)
  */
-export function StatusTimeline({ step, deadline }: { step: 1 | 2 | 3 | 4 | 5; deadline?: string }) {
+export function StatusTimeline({ step, deadline }: { step: TimelineStep; deadline?: string }) {
   return (
     <div className="timeline">
       <ol className="timeline__steps">

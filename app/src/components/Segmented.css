@@ -1,0 +1,25 @@
+/* Segment switch, e.g. «Erhalten | Abgegeben» (A-4) or «Meine Trades | Meine Angebote» (B-4) */
+.segmented {
+  display: flex;
+  gap: var(--space-inset-xs);
+  padding: var(--space-inset-xs);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-muted);
+}
+
+.segmented__option {
+  flex: 1;
+  min-height: var(--size-text-action-height);
+  padding: var(--space-inset-sm) var(--space-inset-md);
+  border: none;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.segmented__option[aria-selected='true'] {
+  background: var(--color-surface-default);
+  box-shadow: var(--shadow-raised);
+  color: var(--color-text-primary);
+}
