@@ -317,31 +317,6 @@ button.chip {
 }
 
 /* --- Ratings list (A-4) --------------------------------------------------- */
-.segmented {
-  display: flex;
-  gap: var(--space-inset-xs);
-  padding: var(--space-inset-xs);
-  border-radius: var(--radius-control);
-  background: var(--color-surface-muted);
-}
-
-.segmented__option {
-  flex: 1;
-  min-height: var(--size-text-action-height);
-  padding: var(--space-inset-sm) var(--space-inset-md);
-  border: none;
-  border-radius: var(--radius-control);
-  background: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-}
-
-.segmented__option[aria-selected='true'] {
-  background: var(--color-surface-default);
-  box-shadow: var(--shadow-raised);
-  color: var(--color-text-primary);
-}
-
 .profile-rating-hidden {
   display: flex;
   align-items: flex-start;
@@ -353,4 +328,25 @@ button.chip {
   flex: none;
   width: var(--size-icon-sm);
   height: var(--size-icon-sm);
+}
+
+/* --- A/15 «Mehr» links as list rows (UX review #54) ---------------------- */
+.profile-links {
+  display: flex;
+  flex-direction: column;
+  border-top: var(--stroke-default) solid var(--color-border-subtle);
+}
+
+.profile-links__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-stack-sm);
+  padding: var(--space-inset-md) 0;
+  border-bottom: var(--stroke-default) solid var(--color-border-subtle);
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+
+.profile-links__row .text-body-strong {
+  flex: 1;
 }

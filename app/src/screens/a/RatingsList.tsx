@@ -2,6 +2,7 @@ import { EyeOff } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AppBar } from '../../components/AppBar'
 import { Rating, RatingSummary } from '../../components/Rating'
+import { Segmented } from '../../components/Segmented'
 import { Zustand } from '../../components/Zustand'
 import { useAuth } from '../../lib/auth'
 import { firstName, monthYear, useGivenRatings, useRatings, type GivenRatingRow } from './profileData'
@@ -28,19 +29,15 @@ export function RatingsList() {
     <>
       <AppBar title="Bewertungen" back />
       <main className="screen profile">
-        <div className="segmented" role="tablist" aria-label="Bewertungen">
-          {(['erhalten', 'abgegeben'] as const).map((t) => (
-            <button
-              key={t}
-              role="tab"
-              aria-selected={tab === t}
-              className="segmented__option text-label"
-              onClick={() => setParams(t === 'erhalten' ? {} : { tab: t }, { replace: true })}
-            >
-              {t === 'erhalten' ? 'Erhalten' : 'Abgegeben'}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          label="Bewertungen"
+          options={[
+            { value: 'erhalten', label: 'Erhalten' },
+            { value: 'abgegeben', label: 'Abgegeben' },
+          ]}
+          value={tab}
+          onChange={(t) => setParams(t === 'erhalten' ? {} : { tab: t }, { replace: true })}
+        />
 
         {given === null ? null : tab === 'erhalten' ? (
           received.length === 0 ? (

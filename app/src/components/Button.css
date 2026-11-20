@@ -1,4 +1,9 @@
 .button {
+  /* inline-flex + centring so <Link className="button …"> looks like a <button> too */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
   height: var(--size-control-height);
   padding: 0 var(--space-inset-lg);
   border-radius: var(--radius-control);

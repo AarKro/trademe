@@ -1,4 +1,4 @@
-import { Camera, ChevronRight, ListChecks, MapPin, ShieldQuestion, type LucideIcon } from 'lucide-react'
+import { Camera, ChevronRight, Eye, ListChecks, MapPin, ShieldQuestion, Star, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { AppBar } from '../../components/AppBar'
@@ -97,9 +97,18 @@ export function MyProfile() {
 
             <ReceivedRatings ratings={ratings} avg={stats.rating_avg} />
 
-            <Link to={`/profil/${profile.id}`} className="profile__link text-label text-accent">
-              So sehen andere dein Profil
-            </Link>
+            <nav className="profile-links" aria-label="Mehr">
+              <Link to="/profil/bewertungen" className="profile-links__row">
+                <Star className="profile-progress__icon" aria-hidden />
+                <span className="text-body-strong">Erhaltene und abgegebene Bewertungen</span>
+                <ChevronRight className="profile-progress__chevron" aria-hidden />
+              </Link>
+              <Link to={`/profil/${profile.id}`} className="profile-links__row">
+                <Eye className="profile-progress__icon" aria-hidden />
+                <span className="text-body-strong">So sehen andere dein Profil</span>
+                <ChevronRight className="profile-progress__chevron" aria-hidden />
+              </Link>
+            </nav>
             <Button variant="text" onClick={() => supabase.auth.signOut()}>
               Abmelden
             </Button>
@@ -134,9 +143,11 @@ function ReceivedRatings({ ratings, avg }: { ratings: RatingRow[]; avg: number }
           </ul>
         </>
       )}
-      <Link to="/profil/bewertungen" className="text-label text-accent">
-        {ratings.length > 3 ? `Alle ${ratings.length} Bewertungen ansehen` : 'Erhaltene und abgegebene Bewertungen'}
-      </Link>
+      {ratings.length > 3 && (
+        <Link to="/profil/bewertungen" className="text-label text-accent">
+          Alle {ratings.length} Bewertungen ansehen
+        </Link>
+      )}
     </section>
   )
 }
