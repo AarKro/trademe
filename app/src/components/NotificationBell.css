@@ -1,0 +1,32 @@
+.notification-bell {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  padding: var(--space-inset-xs);
+  color: var(--color-icon-default);
+}
+
+.notification-bell__count {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: var(--size-notification-badge);
+  height: var(--size-notification-badge);
+  padding: 0 var(--space-inset-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-badge);
+  background: var(--color-action-primary);
+  color: var(--color-text-on-accent);
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* small dot for «something new here», e.g. on the Chat tab */
+.unread-dot {
+  width: var(--size-unread-dot);
+  height: var(--size-unread-dot);
+  border-radius: var(--radius-badge);
+  background: var(--color-action-primary);
+}

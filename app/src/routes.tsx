@@ -8,8 +8,10 @@ import { DevIndex } from './screens/DevIndex'
 import { Login } from './screens/Login'
 import { EditProfile } from './screens/a/EditProfile'
 import { MyProfile } from './screens/a/MyProfile'
+import { Notifications } from './screens/a/Notifications'
 import { PublicProfile } from './screens/a/PublicProfile'
 import { RateTrade } from './screens/a/RateTrade'
+import { RatingsList } from './screens/a/RatingsList'
 import { Checkout } from './screens/b/Checkout'
 import { CreateTrade, EditTrade } from './screens/b/CreateTrade'
 import { MyTrades } from './screens/b/MyTrades'
@@ -23,7 +25,9 @@ import { screens } from './screens/registry'
 const built: Record<string, ReactNode> = {
   '/profil': <MyProfile />,
   '/profil/bearbeiten': <EditProfile />,
+  '/profil/bewertungen': <RatingsList />,
   '/profil/:userId': <PublicProfile />,
+  '/benachrichtigungen': <Notifications />,
   '/trades/:tradeId/bewerten': <RateTrade />,
   '/erstellen': <CreateTrade />,
   '/trades': <MyTrades />,

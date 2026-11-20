@@ -127,6 +127,8 @@
   --size-progress-height: 6px;
   --size-rating-input: 32px;
   --size-composer: 56px;
+  --size-notification-badge: 18px; /* A-2 bell counter · no Figma frame yet */
+  --size-unread-dot: 8px;          /* A-2 unread dot (Chat tab, notification list) */
   --size-composer-input: 40px;
   --size-chat-bubble: 280px;
   --font-size-caption: 12px;

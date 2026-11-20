@@ -2,14 +2,15 @@ import { Calendar, CircleAlert, CircleCheck, Image as ImageIcon, MapPin, ShieldQ
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { AppBar } from '../../components/AppBar'
+import { BottomSheet } from '../../components/BottomSheet'
 import { Button } from '../../components/Button'
 import { useAuth } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
-import type { Offer, Profile, Trade } from '../../lib/types'
+import type { Offer, Profile, Trade, TradeAddress } from '../../lib/types'
 import { TradeProgress } from './TradeProgress'
 import './Checkout.css'
 
-type CheckoutTrade = Pick<Trade, 'id' | 'title' | 'location' | 'is_remote' | 'photo_urls' | 'status' | 'helper_id'>
+type CheckoutTrade = Pick<Trade, 'id' | 'title' | 'location' | 'is_remote' | 'photo_urls' | 'status' | 'helper_id' | 'scheduled_at' | 'payment_methods'>
 type CheckoutOffer = Pick<Offer, 'id' | 'helper_id' | 'price_chf' | 'proposed_at' | 'status'> & {
   helper: Pick<Profile, 'display_name' | 'avatar_url' | 'is_verified' | 'accepted_payment_methods'> | null
 }
@@ -17,6 +18,7 @@ type Agreement = {
   trade: CheckoutTrade
   offer: CheckoutOffer
   rating: { rating_avg: number; rating_count: number } | null
+  address: Pick<TradeAddress, 'street' | 'zip' | 'city'> | null
   confirmed: boolean
 }
 type State = { kind: 'loading' | 'unavailable' | 'error' } | { kind: 'ready'; agreement: Agreement }
@@ -31,7 +33,7 @@ const uuid = /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/i
 async function loadAgreement(tradeId: string, offerId: string, userId: string, signal?: AbortSignal) {
   if (!uuid.test(tradeId) || !uuid.test(offerId)) return null
 
-  const tradeQuery = supabase.from('trades').select('id, title, location, is_remote, photo_urls, status, helper_id')
+  const tradeQuery = supabase.from('trades').select('id, title, location, is_remote, photo_urls, status, helper_id, scheduled_at, payment_methods')
     .eq('id', tradeId).eq('client_id', userId)
   const { data: trade, error: tradeError } = await (signal ? tradeQuery.abortSignal(signal) : tradeQuery)
     .maybeSingle<CheckoutTrade>()
@@ -58,9 +60,14 @@ async function loadAgreement(tradeId: string, offerId: string, userId: string, s
     confirmed = true
   }
 
+  const addressQuery = supabase.from('trade_addresses').select('street, zip, city').eq('trade_id', tradeId)
+  const { data: address, error: addressError } = await (signal ? addressQuery.abortSignal(signal) : addressQuery)
+    .maybeSingle<Agreement['address']>()
+  if (addressError) throw addressError
+
   const ratingQuery = supabase.from('profile_stats').select('rating_avg, rating_count').eq('id', offer.helper_id)
   const { data: rating } = await (signal ? ratingQuery.abortSignal(signal) : ratingQuery).maybeSingle()
-  return { trade, offer, rating, confirmed } satisfies Agreement
+  return { trade, offer, rating, address, confirmed } satisfies Agreement
 }
 
 export function Checkout() {
@@ -79,6 +86,7 @@ function CheckoutContent({ tradeId, offerId, userId }: { tradeId: string; offerI
   const [state, setState] = useState<State>({ kind: 'loading' })
   const [attempt, setAttempt] = useState(0)
   const [busy, setBusy] = useState(false)
+  const [termsOpen, setTermsOpen] = useState(false)
   const [failed, setFailed] = useState(false)
 
   useEffect(() => {
@@ -93,7 +101,7 @@ function CheckoutContent({ tradeId, offerId, userId }: { tradeId: string; offerI
   }, [tradeId, offerId, userId, attempt])
 
   const agreement = state.kind === 'ready' ? state.agreement : null
-  const cashAvailable = agreement?.offer.helper?.accepted_payment_methods.includes('bar') ?? false
+  const cashAvailable = Boolean(agreement?.trade.payment_methods.includes('bar') && agreement.offer.helper?.accepted_payment_methods.includes('bar'))
   const confirmed = agreement?.confirmed ?? false
 
   async function confirmCash() {
@@ -124,8 +132,12 @@ function CheckoutContent({ tradeId, offerId, userId }: { tradeId: string; offerI
   const detail = '/trades/' + tradeId
   const name = agreement?.offer.helper?.display_name || 'Helfende Person'
   const price = agreement ? 'CHF ' + francs.format(agreement.offer.price_chf) : ''
-  const proposed = agreement?.offer.proposed_at ? new Date(agreement.offer.proposed_at) : null
-  const location = agreement?.trade.is_remote ? 'Überall' : agreement?.trade.location
+  const appointment = confirmed ? agreement?.trade.scheduled_at ?? agreement?.offer.proposed_at : agreement?.offer.proposed_at
+  const proposed = appointment ? new Date(appointment) : null
+  const address = agreement?.address
+  const location = agreement?.trade.is_remote ? 'Remote'
+    : address ? address.street + ', ' + address.zip + ' ' + address.city : agreement?.trade.location
+  const cancellation = 'Gratis stornieren bis 48 Stunden vor dem Termin, danach 20 %.'
   const count = agreement?.rating?.rating_count ?? 0
   const verified = agreement?.offer.helper?.is_verified
 
@@ -161,7 +173,9 @@ function CheckoutContent({ tradeId, offerId, userId }: { tradeId: string; offerI
               <h2 className="text-h3">{agreement.trade.title}</h2>
             </div>}
             <TradeProgress active={confirmed ? 2 : 1} hint={confirmed ? 'Bezahle vor Ort direkt bei der helfenden Person.' : 'Bestätige die Vereinbarung, damit der Termin eingeplant wird.'} />
-            <section className="card checkout__card" aria-label="Vereinbarung">
+            <section className="card checkout__card" aria-label="Zusammenfassung">
+              <h2 className="text-h3">Zusammenfassung</h2>
+              <p className="text-body">Übernommen aus dem Angebot von {name}</p>
               <div className="checkout__person">
                 {agreement.offer.helper?.avatar_url
                   ? <img className="checkout__avatar" src={agreement.offer.helper.avatar_url} alt="" />
@@ -180,14 +194,30 @@ function CheckoutContent({ tradeId, offerId, userId }: { tradeId: string; offerI
               </div>
               <div className="checkout__facts text-body">
                 <p><Calendar aria-hidden />{proposed ? dateTime.format(proposed) : 'Termin noch offen'}</p>
-                {location && <p><MapPin aria-hidden />{location}</p>}
-                {confirmed && <p><Wallet aria-hidden />Bar vor Ort</p>}
+                <p><MapPin aria-hidden />{location || 'Ort noch offen'}</p>
+                <p><Wallet aria-hidden />{confirmed || cashAvailable ? 'Bar vor Ort' : 'Keine verfügbare Zahlungsart'}</p>
               </div>
-              <div className="checkout__total"><span className="text-label text-secondary">Vereinbart</span>
+              <div className="checkout__total"><span className="text-label text-secondary">Preis</span>
                 <strong className="text-numeric">{price}</strong></div>
+              <p className="text-body">Gebühr für dich: CHF 0</p>
+              <p className="text-body">{cancellation}</p>
             </section>
             <div className="checkout__actions">
-              {!confirmed && proposed && <p className="text-caption text-secondary">Kostenlose Stornierung bis {dateTime.format(new Date(proposed.getTime() - 48 * 60 * 60 * 1000))} · danach 20 %</p>}
+              <p className="text-body">Bei Barzahlung bezahlst du direkt vor Ort. Es gibt keinen Zahlungsschutz.</p>
+              <p className="text-body">Bei TWINT oder Karte wird das Geld bei TradeMe hinterlegt und erst nach deiner Freigabe ausgezahlt.</p>
+              <Button variant="text" onClick={() => setTermsOpen(true)}>AGB</Button>
+            </div>
+            <BottomSheet open={termsOpen} onClose={() => setTermsOpen(false)} title="AGB · Die wichtigsten Regeln">
+              <ol className="checkout__rules text-body">
+                <li>Bei TWINT und Karte wird das Geld bis zur Freigabe hinterlegt. Barzahlung hat keinen Zahlungsschutz.</li>
+                <li>{cancellation}</li>
+                <li>Wenn «erledigt» gemeldet wurde, bekommst du an Tag 7 eine Erinnerung. An Tag 10 wird das Geld automatisch freigegeben.</li>
+                <li>Probleme kannst du bis Tag 30 melden. Solange das Problem offen ist, pausiert die Auszahlung.</li>
+                <li>TradeMe zieht der helfenden Person 4 % Plattformgebühr ab.</li>
+              </ol>
+              <Button variant="secondary" onClick={() => setTermsOpen(false)}>Schliessen</Button>
+            </BottomSheet>
+            <div className="checkout__actions">
               {confirmed
                 ? <Link className="checkout__link text-label" to={detail}>Zum Trade</Link>
                 : <Button onClick={() => dialog.current?.showModal()}>{failed ? 'Erneut versuchen' : 'Zahlungsmethode wählen'}</Button>}
@@ -211,7 +241,11 @@ function CheckoutContent({ tradeId, offerId, userId }: { tradeId: string; offerI
               </fieldset>
               <div className="checkout__bill text-body">
                 <p><span>{name} · {agreement.trade.title}</span><span>{price}</span></p>
+                <p><span>Termin</span><span>{proposed ? dateTime.format(proposed) : 'Noch offen'}</span></p>
+                <p><span>Ort</span><span>{location || 'Noch offen'}</span></p>
+                <p><span>Zahlungsart</span><span>{cashAvailable ? 'Bar vor Ort' : 'Keine verfügbar'}</span></p>
                 <p><span>Gebühr für dich</span><span>CHF 0</span></p>
+                <p>{cancellation}</p>
               </div>
               <Button disabled={!cashAvailable || busy} onClick={() => void confirmCash()}>
                 {busy ? 'Wird bestätigt …' : 'Barzahlung bestätigen'}

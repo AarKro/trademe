@@ -47,11 +47,11 @@ Priorität: **P1** = Lücke im Ablauf, **P2** = unklar/schlecht sichtbar, **P3**
 ### A · Profil, Bewertungen, Benachrichtigungen (Aaron)
 
 - [x] **A-1** Migration (siehe oben). *Zuerst, damit B und C weiterkommen.*
-- [ ] **A-2 (P1) Benachrichtigungen in der App** 🔒
+- [x] **A-2 (P1) Benachrichtigungen in der App** 🔒
   Glocke mit Zähler in der App-Bar der Tab-Roots (oder Punkt auf dem Bottom-Nav-Tab), neuer Screen `/benachrichtigungen` (Liste: Text, Zeit, ungelesen fett, Tipp → zum Trade/Chat, alles gelesen setzen). Live über Realtime. Ungelesene Chats zusätzlich als Punkt auf dem Tab «Chat». Route in `registry.ts` als Owner A eintragen. Gemeinsame Dateien (`AppBar`, `BottomNav`, `TabLayout`) → im PR erwähnen.
-- [ ] **A-3 (P1) Erhaltene Bewertungen im eigenen Profil** 🟢
+- [x] **A-3 (P1) Erhaltene Bewertungen im eigenen Profil** 🟢
   In `/profil` die erhaltenen Bewertungen direkt anzeigen (die neuesten 3 + «Alle ansehen»), nicht nur den Link aufs öffentliche Profil. Die Regel «verdeckt bis zur Gegenbewertung» (#13) gilt weiter.
-- [ ] **A-4 (P2) Liste «Erhalten / Abgegeben»** 🟢
+- [x] **A-4 (P2) Liste «Erhalten / Abgegeben»** 🟢
   Neuer Screen `/profil/bewertungen` mit Umschalter «Erhalten» | «Abgegeben». Abgegebene zeigen Person, Trade, Sterne und den Hinweis «noch verdeckt», solange die Gegenseite nicht bewertet hat.
 - [ ] **A-5 (P2) Bewertung erreichbar für Helfende** 🟢 *(mit C absprechen, C-Datei)*
   Prüfen, dass A/14 aus C/09 und aus Benachrichtigungen erreichbar ist. Falls C es nicht in C-2 macht, gibt A dem C-Agent den Link.
@@ -70,11 +70,11 @@ Priorität: **P1** = Lücke im Ablauf, **P2** = unklar/schlecht sichtbar, **P3**
   - Tags (Chips, frei + Vorschläge) und akzeptierte Zahlungsarten erfassen.
 - [x] **B-3 (P1) Eigene Trades bearbeiten und löschen** 🟢 bearbeiten / 🔒 löschen
   Im Trade-Detail (Status `offen`): Menü in der App-Bar → «Bearbeiten» (gleiches Formular wie Erstellen, vorausgefüllt, `update` auf `trades`) und «Löschen» (Bestätigungs-Sheet → `rpc('delete_trade')`). Nach `vergeben` gibt es nur «Stornieren» (gibt es schon).
-- [ ] **B-4 (P1) «Meine Trades» / «Meine Angebote»** 🟢
+- [x] **B-4 (P1) «Meine Trades» / «Meine Angebote»** 🟢
   Umschalter oben in `/trades`. «Meine Trades» = Trades, die ich erstellt habe. «Meine Angebote» = Angebote, die ich gesendet habe, mit Status (offen / angenommen / abgelehnt) → Tipp öffnet `/auftraege/:id`. Die Gruppierung «Handlung nötig» bleibt pro Tab.
 - [x] **B-5 (P2) Klare Buttons bei Angeboten** 🟢 Annehmen/Chatten · 🔒 Ablehnen
   Jede Angebotskarte in B/03b hat drei Aktionen: **Annehmen** (primär), **Chatten**, **Ablehnen** (Bestätigung → `rpc('decline_offer')`). Abgelehnte Angebote verschwinden aus der Liste.
-- [ ] **B-6 (P1/P2) Checkout: übernehmen, zusammenfassen, erklären** 🟢
+- [x] **B-6 (P1/P2) Checkout: übernehmen, zusammenfassen, erklären** 🟢
   - Preis und Termin kommen schon aus dem Angebot (`accept_offer` setzt `scheduled_at`). Das sichtbar machen: «Übernommen aus dem Angebot von …», nichts muss abgetippt werden.
   - Zusammenfassung **aller** Angaben vor der Zahlung (Summary-Card 423:537): Trade, Person, Termin, Ort/Adresse, Preis, Zahlungsart, Gebühr, Stornoregel.
   - Bezahlung in einfachen Worten erklären: «Das Geld wird bei TradeMe hinterlegt und erst nach deiner Freigabe ausgezahlt», «bar = kein Zahlungsschutz», «gratis stornieren bis 48 h vorher, danach 20 %». Link «AGB» auf ein kurzes Sheet mit den 5 wichtigsten Regeln (Text aus README «Business rules»).
@@ -88,12 +88,12 @@ Priorität: **P1** = Lücke im Ablauf, **P2** = unklar/schlecht sichtbar, **P3**
   - Jede Zeile zeigt **Name + Avatar der Person** und darunter den Trade-Titel.
   - Bereich «Abgeschlossen» (eingeklappt) für Chats zu Trades mit Status `abgeschlossen` / `storniert`.
   - Ungelesen-Punkt kommt mit A-2. Bis dahin reicht Sortierung nach letzter Nachricht.
-- [ ] **C-2 (P2) Auftrag-Detail ergänzen** 🟢
+- [x] **C-2 (P2) Auftrag-Detail ergänzen** (A-1 gemerged)
   - Nach dem Senden eines Angebots erklären, wie es weitergeht: kleine Status-Timeline / 3 Schritte («Person prüft dein Angebot → Du wirst benachrichtigt → Bei Annahme siehst du Adresse und Termin»).
   - Button «Chatten» mit der auftraggebenden Person (ab Angebot gesendet).
   - C/09: Button «Bewertung abgeben» → `/trades/:id/bewerten` (A/14).
   - Abgelehntes Angebot freundlich anzeigen (🔒 A-1).
-- [ ] **C-3 (P1) Adresse nach der Zahlung zeigen** 🔒 (A-1)
+- [x] **C-3 (P1) Adresse nach der Zahlung zeigen** (A-1 gemerged)
   In C/08 / C/05 die volle Adresse aus `trade_addresses` anzeigen, mit Link «In Karte öffnen». Vorher nur das Quartier und der Hinweis «Adresse siehst du nach der Zahlung».
 - [ ] **C-4 (P2) Filter in Entdecken** 🟢 Preis/Remote · 🔒 Tags/Zahlungsart
   Filter-Sheet (Bottom-Sheet) mit: Tags, Zahlungsart, Preisbereich (min–max CHF), «Remote». Aktive Filter als Chips mit ×. Gilt für Karte und Liste.
