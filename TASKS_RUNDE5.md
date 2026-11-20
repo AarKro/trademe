@@ -83,7 +83,7 @@ Priorität: **P1** = Lücke im Ablauf, **P2** = unklar/schlecht sichtbar, **P3**
 
 ### C · Helfende (Entdecken, Auftrag, Chat)
 
-- [ ] **C-1 (P1/P2) Chat-Liste reparieren und ausbauen** 🟢
+- [x] **C-1 (P1/P2) Chat-Liste reparieren und ausbauen** 🟢
   - **Bug:** Die Liste lädt nur `helper_id = ich`. Sie muss auch Chats zu meinen eigenen Trades zeigen (`trades.client_id = ich`), eine Zeile pro Trade + Gegenüber.
   - Jede Zeile zeigt **Name + Avatar der Person** und darunter den Trade-Titel.
   - Bereich «Abgeschlossen» (eingeklappt) für Chats zu Trades mit Status `abgeschlossen` / `storniert`.
