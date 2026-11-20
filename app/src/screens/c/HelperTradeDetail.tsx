@@ -38,7 +38,7 @@ function HelperTradeDetailContent({ tradeId, helperId }: { tradeId: string; help
   const [proposedAt, setProposedAt] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
-  const [ownOffer, setOwnOffer] = useState<{ id: string; price_chf: number; proposed_at: string | null } | null>(null)
+  const [ownOffer, setOwnOffer] = useState<{ id: string; price_chf: number; proposed_at: string | null; status: 'offen' | 'angenommen' | 'abgelehnt' | 'zurueckgezogen' } | null>(null)
   const [payout, setPayout] = useState<number | null>(null)
   const [reportingDone, setReportingDone] = useState(false)
   const [address, setAddress] = useState<TradeAddress | null>(null)
@@ -55,7 +55,7 @@ function HelperTradeDetailContent({ tradeId, helperId }: { tradeId: string; help
         return
       }
       setTrade(data)
-      const { data: offer } = await supabase.from('offers').select('id, price_chf, proposed_at').eq('trade_id', data.id).eq('helper_id', helperId).maybeSingle<{ id: string; price_chf: number; proposed_at: string | null }>()
+      const { data: offer } = await supabase.from('offers').select('id, price_chf, proposed_at, status').eq('trade_id', data.id).eq('helper_id', helperId).maybeSingle<{ id: string; price_chf: number; proposed_at: string | null; status: 'offen' | 'angenommen' | 'abgelehnt' | 'zurueckgezogen' }>()
       if (active) setOwnOffer(offer)
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.client_id).maybeSingle<Profile>()
       const { data: tradeAddress } = await supabase.from('trade_addresses').select('trade_id, street, zip, city').eq('trade_id', data.id).maybeSingle<TradeAddress>()
@@ -108,6 +108,7 @@ function HelperTradeDetailContent({ tradeId, helperId }: { tradeId: string; help
   const clientName = client?.display_name ?? 'Auftraggebende Person'
   const canOffer = trade.status === 'offen' && !ownOffer && !success
   const offerSent = trade.status === 'offen' && (ownOffer || success)
+  const offerDeclined = ownOffer?.status === 'abgelehnt'
 
   return (
     <>
@@ -115,6 +116,7 @@ function HelperTradeDetailContent({ tradeId, helperId }: { tradeId: string; help
       <main className="screen helper-detail">
         {error && <p className="helper-detail__error text-caption" role="alert">{error}</p>}
         {success && <p className="helper-detail__success text-label" role="status">Dein Angebot wurde gesendet.</p>}
+        {offerDeclined && <div className="helper-detail__state helper-detail__state--declined"><strong className="text-label">Dieses Angebot wurde abgelehnt</strong><span className="text-caption">Danke für dein Interesse. Du kannst weiterhin andere passende Aufträge entdecken.</span></div>}
         {offerSent && <div className="helper-detail__state helper-detail__state--accent"><strong className="text-label">Angebot gesendet</strong><span className="text-caption">CHF {currency.format(ownOffer?.price_chf ?? Number(price))}{(ownOffer?.proposed_at || proposedAt) ? ` · ${formatDate(ownOffer?.proposed_at ?? proposedAt)}` : ''}</span></div>}
         {trade.photo_urls[0] ? <img className="helper-detail__hero" src={trade.photo_urls[0]} alt="" /> : <div className="helper-detail__hero helper-detail__hero--empty"><ImageIcon size={32} /></div>}
         <h2 className="helper-detail__title">{trade.title}</h2>
