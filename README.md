@@ -4,6 +4,8 @@
 
 Progressive Web App for the TradeMe school project. The design lives in Figma, page **Screens V4**.
 
+**Live app (`main`):** https://trademe-eosin.vercel.app. It updates automatically after every merge into `main`. On your phone: open the link → Safari «Share → Add to Home Screen» / Chrome «⋮ → Install app».
+
 | Part | Where | Tech |
 |---|---|---|
 | App (PWA) | `app/` | Vite + React + TypeScript, `vite-plugin-pwa`, Lucide icons |
