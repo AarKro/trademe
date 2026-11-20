@@ -9,6 +9,7 @@ import { Button } from '../../components/Button'
 import { Segmented } from '../../components/Segmented'
 import { Zustand } from '../../components/Zustand'
 import { useAuth } from '../../lib/auth'
+import { getDiscoverPhoto } from '../../lib/discoverPhotos'
 import { supabase } from '../../lib/supabase'
 import type { Trade } from '../../lib/types'
 import L from 'leaflet'
@@ -53,9 +54,10 @@ function formatLocation(trade: Trade) {
 }
 
 function TradeCard({ trade }: { trade: Trade }) {
+  const photo = getDiscoverPhoto(trade)
   return (
     <Link className="discover-card" to={`/auftraege/${trade.id}`}>
-      <div className="discover-card__image"><TradePhoto src={trade.photo_urls[0]} loading="lazy" /></div>
+      <div className="discover-card__image"><TradePhoto src={photo} loading="lazy" /></div>
       <div className="discover-card__content">
         <h2 className="text-h3">{trade.title}</h2>
         <p className="text-caption text-secondary">{formatLocation(trade)} · {formatTradeDate(trade)}</p>
