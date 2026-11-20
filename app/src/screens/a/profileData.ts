@@ -54,6 +54,7 @@ export function useProfile(userId: string | undefined) {
 
 export interface RatingRow {
   id: string
+  trade_id: string
   stars: number
   comment: string | null
   created_at: string
@@ -71,7 +72,7 @@ export function useRatings(subjectId: string | undefined) {
     supabase
       .from('ratings')
       .select(
-        'id, stars, comment, created_at, author:profiles!ratings_author_id_fkey(id, display_name), trade:trades(title)',
+        'id, trade_id, stars, comment, created_at, author:profiles!ratings_author_id_fkey(id, display_name), trade:trades(title)',
       )
       .eq('subject_id', subjectId)
       .order('created_at', { ascending: false })
@@ -82,6 +83,41 @@ export function useRatings(subjectId: string | undefined) {
       })
     return () => controller.abort()
   }, [subjectId])
+
+  return ratings
+}
+
+export interface GivenRatingRow {
+  id: string
+  trade_id: string
+  stars: number
+  comment: string | null
+  created_at: string
+  subject: { id: string; display_name: string } | null
+  trade: { title: string } | null
+}
+
+/** Ratings the user wrote about others, newest first (A-4 «Abgegeben»). */
+export function useGivenRatings(authorId: string | undefined) {
+  const [ratings, setRatings] = useState<GivenRatingRow[] | null>(null)
+
+  useEffect(() => {
+    if (!authorId) return
+    const controller = new AbortController()
+    supabase
+      .from('ratings')
+      .select(
+        'id, trade_id, stars, comment, created_at, subject:profiles!ratings_subject_id_fkey(id, display_name), trade:trades(title)',
+      )
+      .eq('author_id', authorId)
+      .order('created_at', { ascending: false })
+      .abortSignal(controller.signal)
+      .overrideTypes<GivenRatingRow[], { merge: false }>()
+      .then(({ data }) => {
+        if (!controller.signal.aborted) setRatings(data ?? [])
+      })
+    return () => controller.abort()
+  }, [authorId])
 
   return ratings
 }

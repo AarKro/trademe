@@ -150,6 +150,13 @@ export const screens: ScreenDef[] = [
     note: 'Runde 5 · A-2. Kein Figma-Frame. Glocke in der App-Bar aller Tab-Roots, Punkt auf dem Chat-Tab. Daten: notifications (von Triggern erstellt), live via Realtime.',
   },
   {
+    path: '/profil/bewertungen',
+    title: 'Bewertungen (erhalten / abgegeben)',
+    owner: 'A',
+    frames: [],
+    note: 'Runde 5 · A-4. Kein eigenes Figma-Frame; Bewertungs-Zeilen wie in A/10. ?tab=abgegeben öffnet den zweiten Tab.',
+  },
+  {
     path: '/profil/:userId',
     title: 'Profil',
     owner: 'A',

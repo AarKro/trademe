@@ -2,8 +2,10 @@
   padding-inline: var(--space-inset-xl);
 }
 
-.my-trades--empty {
-  justify-content: center;
+.my-trades__switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-inline-xs);
 }
 
 .my-trades__empty-state {

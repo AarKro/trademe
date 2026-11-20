@@ -51,7 +51,7 @@ Priorität: **P1** = Lücke im Ablauf, **P2** = unklar/schlecht sichtbar, **P3**
   Glocke mit Zähler in der App-Bar der Tab-Roots (oder Punkt auf dem Bottom-Nav-Tab), neuer Screen `/benachrichtigungen` (Liste: Text, Zeit, ungelesen fett, Tipp → zum Trade/Chat, alles gelesen setzen). Live über Realtime. Ungelesene Chats zusätzlich als Punkt auf dem Tab «Chat». Route in `registry.ts` als Owner A eintragen. Gemeinsame Dateien (`AppBar`, `BottomNav`, `TabLayout`) → im PR erwähnen.
 - [x] **A-3 (P1) Erhaltene Bewertungen im eigenen Profil** 🟢
   In `/profil` die erhaltenen Bewertungen direkt anzeigen (die neuesten 3 + «Alle ansehen»), nicht nur den Link aufs öffentliche Profil. Die Regel «verdeckt bis zur Gegenbewertung» (#13) gilt weiter.
-- [ ] **A-4 (P2) Liste «Erhalten / Abgegeben»** 🟢
+- [x] **A-4 (P2) Liste «Erhalten / Abgegeben»** 🟢
   Neuer Screen `/profil/bewertungen` mit Umschalter «Erhalten» | «Abgegeben». Abgegebene zeigen Person, Trade, Sterne und den Hinweis «noch verdeckt», solange die Gegenseite nicht bewertet hat.
 - [ ] **A-5 (P2) Bewertung erreichbar für Helfende** 🟢 *(mit C absprechen, C-Datei)*
   Prüfen, dass A/14 aus C/09 und aus Benachrichtigungen erreichbar ist. Falls C es nicht in C-2 macht, gibt A dem C-Agent den Link.
@@ -59,7 +59,7 @@ Priorität: **P1** = Lücke im Ablauf, **P2** = unklar/schlecht sichtbar, **P3**
 
 ### B · Auftraggebende (Trade erstellen, Meine Trades, Detail, Checkout)
 
-- [ ] **B-1 (P2) Trade erstellen klarer** 🟢
+- [x] **B-1 (P2) Trade erstellen klarer** 🟢
   - Button «Veröffentlichen» immer sichtbar: Sticky Action-Bar (Pattern 421:451, Komponente `ActionBar`), nicht unten im Formular versteckt.
   - Hinweistexte grösser: `text-body` statt `text-caption`, gut lesbarer Kontrast.
   - Beispieltexte konkret formulieren (Platzhalter wie «z.B. Deckenlampe im Wohnzimmer montieren»), Kategorien verständlich benennen. Ein Feld «Gruppe» darf es nicht geben bzw. es muss erklärt sein.
@@ -70,7 +70,7 @@ Priorität: **P1** = Lücke im Ablauf, **P2** = unklar/schlecht sichtbar, **P3**
   - Tags (Chips, frei + Vorschläge) und akzeptierte Zahlungsarten erfassen.
 - [ ] **B-3 (P1) Eigene Trades bearbeiten und löschen** 🟢 bearbeiten / 🔒 löschen
   Im Trade-Detail (Status `offen`): Menü in der App-Bar → «Bearbeiten» (gleiches Formular wie Erstellen, vorausgefüllt, `update` auf `trades`) und «Löschen» (Bestätigungs-Sheet → `rpc('delete_trade')`). Nach `vergeben` gibt es nur «Stornieren» (gibt es schon).
-- [ ] **B-4 (P1) «Meine Trades» / «Meine Angebote»** 🟢
+- [x] **B-4 (P1) «Meine Trades» / «Meine Angebote»** 🟢
   Umschalter oben in `/trades`. «Meine Trades» = Trades, die ich erstellt habe. «Meine Angebote» = Angebote, die ich gesendet habe, mit Status (offen / angenommen / abgelehnt) → Tipp öffnet `/auftraege/:id`. Die Gruppierung «Handlung nötig» bleibt pro Tab.
 - [ ] **B-5 (P2) Klare Buttons bei Angeboten** 🟢 Annehmen/Chatten · 🔒 Ablehnen
   Jede Angebotskarte in B/03b hat drei Aktionen: **Annehmen** (primär), **Chatten**, **Ablehnen** (Bestätigung → `rpc('decline_offer')`). Abgelehnte Angebote verschwinden aus der Liste.

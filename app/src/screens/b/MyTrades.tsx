@@ -6,7 +6,7 @@ import { Button } from '../../components/Button'
 import { StatusBadge } from '../../components/StatusBadge'
 import { useAuth } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
-import type { Trade } from '../../lib/types'
+import type { Offer, Trade } from '../../lib/types'
 import pip from './assets/pip.svg'
 import pipShadow from './assets/pip-shadow.svg'
 import pipGlint from './assets/pip-glint.svg'
@@ -35,34 +35,57 @@ const appointment = new Intl.DateTimeFormat('de-CH', {
 })
 const francs = new Intl.NumberFormat('de-CH', { maximumFractionDigits: 2 })
 
-async function loadTrades(userId: string, signal: AbortSignal): Promise<TradeRow[]> {
+type SentOffer = Pick<Offer, 'id' | 'trade_id' | 'price_chf' | 'status'> & { trade: TradeRow | null }
+
+async function loadTrades(userId: string, signal: AbortSignal) {
   const [own, offered] = await Promise.all([
-    supabase.from('trades').select(selection).or(`client_id.eq.${userId},helper_id.eq.${userId}`).abortSignal(signal),
-    supabase.from('offers').select(`trade:trades!inner(${selection})`)
-      .eq('helper_id', userId).eq('status', 'offen').eq('trade.status', 'offen').abortSignal(signal),
+    supabase.from('trades').select(selection).eq('client_id', userId).order('created_at', { ascending: false })
+      .abortSignal(signal).overrideTypes<TradeRow[], { merge: false }>(),
+    supabase.from('offers').select(`id, trade_id, price_chf, status, trade:trades(${selection})`)
+      .eq('helper_id', userId).order('created_at', { ascending: false })
+      .abortSignal(signal).overrideTypes<SentOffer[], { merge: false }>(),
   ])
 
   if (own.error) throw own.error
   if (offered.error) throw offered.error
-
-  const trades = new Map<string, TradeRow>()
-  for (const trade of own.data as unknown as TradeRow[]) trades.set(trade.id, trade)
-  for (const { trade } of offered.data as unknown as { trade: TradeRow }[]) trades.set(trade.id, trade)
-  return [...trades.values()].sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
+  return { trades: own.data, offers: offered.data }
 }
 
-function describeTrade(trade: TradeRow, userId: string) {
-  const isClient = trade.client_id === userId
+const offerLabels: Record<Offer['status'], string> = {
+  offen: 'Offen',
+  angenommen: 'Angenommen',
+  abgelehnt: 'Abgelehnt',
+  zurueckgezogen: 'Zurückgezogen',
+}
+
+function describeOffer(offer: SentOffer) {
+  const trade = offer.trade
+  const group = offer.status === 'angenommen' && trade?.status === 'vergeben' ? 'Handlung nötig'
+    : offer.status === 'offen' || (offer.status === 'angenommen' && trade && !['abgeschlossen', 'storniert'].includes(trade.status))
+      ? 'Laufend' : 'Abgeschlossen'
+  return {
+    id: offer.id,
+    title: trade?.title ?? 'Auftrag nicht verfügbar',
+    photo: trade?.photo_urls[0],
+    badge: <span className="text-label">{offerLabels[offer.status]}</span>,
+    group,
+    meta: 'Offerte CHF ' + francs.format(offer.price_chf),
+    next: group === 'Handlung nötig' ? 'Auftrag ansehen' : '',
+    href: '/auftraege/' + offer.trade_id,
+  }
+}
+
+function describeTrade(trade: TradeRow) {
   const openOffers = trade.offers.filter(({ status }) => status === 'offen').length
   const date = trade.scheduled_at ? new Date(trade.scheduled_at) : null
   const price = 'CHF ' + francs.format(trade.budget_chf)
-  const person = isClient ? trade.helper?.display_name : trade.client?.display_name
-  const review = isClient && trade.status === 'zur_bestaetigung'
-  const compare = isClient && trade.status === 'offen' && openOffers > 0
+  const person = trade.helper?.display_name
+  const review = trade.status === 'zur_bestaetigung'
+  const compare = trade.status === 'offen' && openOffers > 0
   const done = trade.status === 'abgeschlossen' || trade.status === 'storniert'
   const group = review || compare ? 'Handlung nötig' : done ? 'Abgeschlossen' : 'Laufend'
   const meta = trade.status === 'offen'
-    ? [isClient ? (openOffers === 1 ? '1 Angebot' : openOffers + ' Angebote') : 'Angebot gesendet', 'Budget ' + price]
+    ? [openOffers === 1 ? '1 Angebot' : openOffers + ' Angebote', 'Budget ' + price]
     : [person, date && shortDate.format(date), 'Budget ' + price]
   let next = ''
 
@@ -78,17 +101,21 @@ function describeTrade(trade: TradeRow, userId: string) {
     next = 'Termin ' + appointment.format(date)
   }
 
-  return { group, meta: meta.filter(Boolean).join(' · '), next, href: (isClient ? '/trades/' : '/auftraege/') + trade.id }
+  return {
+    id: trade.id, title: trade.title, photo: trade.photo_urls[0], badge: <StatusBadge status={trade.status} />,
+    group, meta: meta.filter(Boolean).join(' · '), next, href: '/trades/' + trade.id,
+  }
 }
 
 const sections = ['Handlung nötig', 'Laufend', 'Abgeschlossen'] as const
 
-type LoadState = { kind: 'loading' | 'error' } | { kind: 'ready'; trades: TradeRow[] }
+type LoadState = { kind: 'loading' | 'error' } | { kind: 'ready'; trades: TradeRow[]; offers: SentOffer[] }
 
 export function MyTrades() {
   const { session } = useAuth()
   const navigate = useNavigate()
   const userId = session?.user.id
+  const [view, setView] = useState<'trades' | 'offers'>('trades')
   const [attempt, setAttempt] = useState(0)
   const [state, setState] = useState<LoadState>({ kind: 'loading' })
 
@@ -96,21 +123,25 @@ export function MyTrades() {
     if (!userId) return
     const controller = new AbortController()
     loadTrades(userId, controller.signal).then(
-      (trades) => { if (!controller.signal.aborted) setState({ kind: 'ready', trades }) },
+      (result) => { if (!controller.signal.aborted) setState({ kind: 'ready', ...result }) },
       () => { if (!controller.signal.aborted) setState({ kind: 'error' }) },
     )
     return () => controller.abort()
   }, [userId, attempt])
 
-  const entries = state.kind === 'ready' && userId
-    ? state.trades.map((trade) => ({ trade, ...describeTrade(trade, userId) }))
+  const entries = state.kind === 'ready'
+    ? view === 'trades' ? state.trades.map(describeTrade) : state.offers.map(describeOffer)
     : []
   const isEmpty = state.kind === 'ready' && entries.length === 0
 
   return (
     <>
-      <AppBar title={entries.length ? 'Trades' : 'Meine Trades'} />
-      <main className={`screen my-trades${isEmpty ? ' my-trades--empty' : ''}`}>
+      <AppBar title="Trades" />
+      <main className="screen my-trades">
+        <div className="my-trades__switch" role="group" aria-label="Ansicht">
+          <Button variant={view === 'trades' ? 'primary' : 'secondary'} aria-pressed={view === 'trades'} onClick={() => setView('trades')}>Meine Trades</Button>
+          <Button variant={view === 'offers' ? 'primary' : 'secondary'} aria-pressed={view === 'offers'} onClick={() => setView('offers')}>Meine Angebote</Button>
+        </div>
         {state.kind === 'loading' && <p role="status" className="text-body">Trades werden geladen …</p>}
         {state.kind === 'error' && (
           <>
@@ -121,7 +152,8 @@ export function MyTrades() {
             }}>Erneut versuchen</Button>
           </>
         )}
-        {isEmpty && (
+        {isEmpty && view === 'offers' && <p className="text-body">Du hast noch keine Angebote gesendet.</p>}
+        {isEmpty && view === 'trades' && (
           <>
             <div className="my-trades__empty-state">
               <div className="my-trades__pip" aria-hidden="true">
@@ -143,15 +175,15 @@ export function MyTrades() {
             <section className="my-trades__section" key={heading}>
               <h2 className="text-h3">{heading}</h2>
               <ul>
-                {rows.map(({ trade, meta, next, href }) => (
-                  <li key={trade.id}>
+                {rows.map(({ id, title, photo, badge, meta, next, href }) => (
+                  <li key={id}>
                     <Link className="my-trades__row" to={href}>
-                      {trade.photo_urls[0]
-                        ? <img className="my-trades__photo" src={trade.photo_urls[0]} alt="" loading="lazy" />
+                      {photo
+                        ? <img className="my-trades__photo" src={photo} alt="" loading="lazy" />
                         : <span className="my-trades__photo"><ImageIcon aria-hidden /></span>}
                       <div className="my-trades__copy">
-                        <StatusBadge status={trade.status} />
-                        <h3 className="text-body-strong">{trade.title}</h3>
+                        {badge}
+                        <h3 className="text-body-strong">{title}</h3>
                         <p className="text-caption text-secondary">{meta}</p>
                         {next && <p className="text-label text-accent">{next}</p>}
                       </div>
