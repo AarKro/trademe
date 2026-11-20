@@ -1,5 +1,5 @@
 import { ChevronRight, ListChecks, Send } from 'lucide-react'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AppBar } from '../../components/AppBar'
 import { Avatar } from '../../components/Avatar'
@@ -161,6 +161,13 @@ export function Chat() {
 export function ChatThread() {
   const { tradeId, helperId } = useParams()
   const { session } = useAuth()
+  if (!tradeId || !helperId || !session) return null
+  return <ChatConversation key={threadKey(tradeId, helperId) + '/' + session.user.id}
+    tradeId={tradeId} helperId={helperId} me={session.user.id} />
+}
+
+function ChatConversation({ tradeId, helperId, me }: { tradeId: string; helperId: string; me: string }) {
+  const shell = useRef<HTMLDivElement>(null)
   const [trade, setTrade] = useState<Trade | null>(null)
   const [other, setOther] = useState<Profile | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -169,8 +176,6 @@ export function ChatThread() {
   const [sending, setSending] = useState(false)
 
   useEffect(() => {
-    if (!session || !tradeId || !helperId) return
-    const me = session.user.id
     let active = true
     async function load() {
       const [{ data: tradeData }, { data: messageData }] = await Promise.all([
@@ -179,7 +184,11 @@ export function ChatThread() {
       ])
       if (!active) return
       setTrade(tradeData)
-      setMessages((messageData as Message[] | null) ?? [])
+      setMessages((current) => {
+        const loaded = (messageData as Message[] | null) ?? []
+        const ids = new Set(loaded.map((message) => message.id))
+        return [...loaded, ...current.filter((message) => !ids.has(message.id))]
+      })
       if (tradeData) {
         const otherId = tradeData.client_id === me ? helperId : tradeData.client_id
         const { data: profile } = await supabase.from('profiles').select('*').eq('id', otherId).maybeSingle<Profile>()
@@ -199,17 +208,38 @@ export function ChatThread() {
       active = false
       void supabase.removeChannel(channel)
     }
-  }, [helperId, session, tradeId])
+  }, [helperId, me, tradeId])
+
+  useEffect(() => {
+    const viewport = window.visualViewport
+    const container = shell.current
+    if (!viewport || !container) return
+    function resize() {
+      if (!viewport || !container) return
+      const keyboardOpen = document.activeElement?.classList.contains('chat-composer__input')
+        && window.innerHeight - viewport.height > 120
+      container.toggleAttribute('data-keyboard-open', keyboardOpen)
+      container.style.setProperty('--chat-viewport-height', keyboardOpen ? viewport.height + 'px' : '100dvh')
+    }
+    viewport.addEventListener('resize', resize)
+    container.addEventListener('focusin', resize)
+    container.addEventListener('focusout', resize)
+    return () => {
+      viewport.removeEventListener('resize', resize)
+      container.removeEventListener('focusin', resize)
+      container.removeEventListener('focusout', resize)
+    }
+  }, [])
 
   async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!session || !tradeId || !helperId || !body.trim() || sending) return
+    if (!body.trim() || sending) return
     setSending(true)
     const text = body.trim()
     setBody('')
     const { data, error } = await supabase
       .from('messages')
-      .insert({ trade_id: tradeId, helper_id: helperId, sender_id: session.user.id, body: text })
+      .insert({ trade_id: tradeId, helper_id: helperId, sender_id: me, body: text })
       .select(MESSAGE_FIELDS)
       .single()
     if (!error && data) setMessages((current) => (current.some((m) => m.id === data.id) ? current : [...current, data as Message]))
@@ -217,12 +247,12 @@ export function ChatThread() {
     setSending(false)
   }
 
-  const iAmClient = trade?.client_id === session?.user.id
+  const iAmClient = trade?.client_id === me
   // Context: which trade this chat is about – «Trade» for clients, «Auftrag» for helpers
   const contextLink = trade && (iAmClient ? `/trades/${trade.id}` : `/auftraege/${trade.id}`)
 
   return (
-    <>
+    <div ref={shell} className="chat-conversation">
       <AppBar back title={other?.display_name || 'Chat'} />
       {trade && contextLink && (
         <Link className="chat-thread__context" to={contextLink}>
@@ -251,7 +281,7 @@ export function ChatThread() {
               <span>{m.body}</span>
             </div>
           ) : (
-            <div className={`chat-thread__row ${m.sender_id === session?.user.id ? 'chat-thread__row--own' : ''}`} key={m.id}>
+            <div className={`chat-thread__row ${m.sender_id === me ? 'chat-thread__row--own' : ''}`} key={m.id}>
               <div className="chat-thread__bubble">
                 <p className="text-body">{m.body}</p>
                 <time className="text-caption">{time.format(new Date(m.created_at))}</time>
@@ -272,6 +302,6 @@ export function ChatThread() {
           <Send aria-hidden />
         </button>
       </form>
-    </>
+    </div>
   )
 }
