@@ -1,11 +1,11 @@
 .chat-list { gap: var(--space-stack-sm); padding-inline: var(--space-inset-lg); }
+.chat-list__group, .chat-list__closed { display: flex; flex-direction: column; }
+.chat-list__row { color: var(--color-text-primary); text-decoration: none; }
+.chat-list__name { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-stack-xs); }
+.chat-list__row .unread-dot { flex: none; }
 .chat-list__row { display: flex; align-items: center; gap: var(--space-stack-sm); padding: var(--space-inset-md) 0; border-bottom: var(--stroke-default) solid var(--color-border-subtle); }
-.chat-list__icon { display: grid; flex: none; place-items: center; width: var(--size-avatar-md); height: var(--size-avatar-md); color: var(--color-text-accent); border-radius: var(--radius-avatar); background: var(--color-surface-accent-subtle); }
-.chat-list section, .chat-list__closed { display: flex; flex-direction: column; gap: var(--space-stack-xs); }
 .chat-list__closed { padding-top: var(--space-stack-sm); }
 .chat-list__closed summary { cursor: pointer; }
-.chat-list__avatar { display: grid; flex: none; place-items: center; width: var(--size-avatar-md); height: var(--size-avatar-md); overflow: hidden; border-radius: var(--radius-avatar); color: var(--color-text-accent); background: var(--color-surface-accent-subtle); }
-.chat-list__avatar img { width: 100%; height: 100%; object-fit: cover; }
 .chat-list__copy { display: flex; flex: 1; flex-direction: column; min-width: 0; gap: var(--space-inset-2xs); }
 .chat-list__copy span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chat-thread { gap: var(--space-stack-sm); padding-inline: var(--space-inset-xl); padding-bottom: calc(var(--size-bottom-nav-height) + var(--size-composer) + var(--space-inset-lg)); overflow-y: auto; }
@@ -22,3 +22,10 @@
 .chat-composer__input { flex: 1; min-width: 0; height: var(--size-composer-input); padding: 0 var(--space-inset-lg); border: var(--stroke-default) solid var(--color-border-subtle); border-radius: var(--radius-badge); background: var(--color-surface-muted); }
 .chat-composer__send { display: grid; flex: none; place-items: center; width: var(--size-composer-input); height: var(--size-composer-input); border: 0; border-radius: var(--radius-badge); color: var(--color-text-on-accent); background: var(--color-action-primary); cursor: pointer; }
 .chat-composer__send:disabled { opacity: .5; cursor: default; }
+
+/* thread: which trade this chat is about (UX review #53) */
+.chat-thread__context { display: flex; align-items: center; gap: var(--space-stack-xs); padding: var(--space-inset-sm) var(--space-inset-xl); border-bottom: var(--stroke-default) solid var(--color-border-subtle); background: var(--color-surface-subtle); color: var(--color-text-secondary); text-decoration: none; }
+.chat-thread__context span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-thread__context strong { color: var(--color-text-primary); }
+.chat-thread__context svg, .chat-thread__system svg { flex: none; width: var(--size-icon-sm); height: var(--size-icon-sm); }
+.chat-composer__send svg { width: var(--size-icon-md); height: var(--size-icon-md); }
