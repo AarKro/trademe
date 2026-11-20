@@ -55,7 +55,7 @@ Priorität: **P1** = Lücke im Ablauf, **P2** = unklar/schlecht sichtbar, **P3**
   Neuer Screen `/profil/bewertungen` mit Umschalter «Erhalten» | «Abgegeben». Abgegebene zeigen Person, Trade, Sterne und den Hinweis «noch verdeckt», solange die Gegenseite nicht bewertet hat.
 - [ ] **A-5 (P2) Bewertung erreichbar für Helfende** 🟢 *(mit C absprechen, C-Datei)*
   Prüfen, dass A/14 aus C/09 und aus Benachrichtigungen erreichbar ist. Falls C es nicht in C-2 macht, gibt A dem C-Agent den Link.
-- [ ] **A-6 Gesamttest am Schluss:** einen ganzen Trade mit zwei Testkonten durchspielen (erstellen → Angebot → Zahlung → erledigt → Freigabe → beide bewerten) und Fehler als Issues an B/C geben.
+- [x] **A-6 Gesamttest am Schluss:** einen ganzen Trade mit zwei Testkonten durchspielen (erstellen → Angebot → Zahlung → erledigt → Freigabe → beide bewerten) und Fehler als Issues an B/C geben.
 
 ### B · Auftraggebende (Trade erstellen, Meine Trades, Detail, Checkout)
 
