@@ -315,3 +315,42 @@ button.chip {
   padding-bottom: var(--space-stack-md);
   border-bottom: var(--stroke-default) solid var(--color-border-subtle);
 }
+
+/* --- Ratings list (A-4) --------------------------------------------------- */
+.segmented {
+  display: flex;
+  gap: var(--space-inset-xs);
+  padding: var(--space-inset-xs);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-muted);
+}
+
+.segmented__option {
+  flex: 1;
+  min-height: var(--size-text-action-height);
+  padding: var(--space-inset-sm) var(--space-inset-md);
+  border: none;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.segmented__option[aria-selected='true'] {
+  background: var(--color-surface-default);
+  box-shadow: var(--shadow-raised);
+  color: var(--color-text-primary);
+}
+
+.profile-rating-hidden {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-inline-xs);
+  color: var(--color-text-tertiary);
+}
+
+.profile-rating-hidden svg {
+  flex: none;
+  width: var(--size-icon-sm);
+  height: var(--size-icon-sm);
+}

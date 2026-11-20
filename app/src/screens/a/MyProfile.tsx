@@ -95,7 +95,7 @@ export function MyProfile() {
             />
             <ProfileDetails profile={profile} />
 
-            <ReceivedRatings ratings={ratings} avg={stats.rating_avg} allLink={`/profil/${profile.id}`} />
+            <ReceivedRatings ratings={ratings} avg={stats.rating_avg} />
 
             <Link to={`/profil/${profile.id}`} className="profile__link text-label text-accent">
               So sehen andere dein Profil
@@ -116,7 +116,7 @@ export function MyProfile() {
  * A-3: the newest 3 received ratings right in the own profile. Ratings that are still hidden
  * (the other person hasn't been rated back yet, see #13) are not returned by the database.
  */
-function ReceivedRatings({ ratings, avg, allLink }: { ratings: RatingRow[]; avg: number; allLink: string }) {
+function ReceivedRatings({ ratings, avg }: { ratings: RatingRow[]; avg: number }) {
   return (
     <section className="profile__section">
       <h2 className="text-h3">Bewertungen</h2>
@@ -132,13 +132,11 @@ function ReceivedRatings({ ratings, avg, allLink }: { ratings: RatingRow[]; avg:
               </li>
             ))}
           </ul>
-          {ratings.length > 3 && (
-            <Link to={allLink} className="text-label text-accent">
-              Alle {ratings.length} Bewertungen ansehen
-            </Link>
-          )}
         </>
       )}
+      <Link to="/profil/bewertungen" className="text-label text-accent">
+        {ratings.length > 3 ? `Alle ${ratings.length} Bewertungen ansehen` : 'Erhaltene und abgegebene Bewertungen'}
+      </Link>
     </section>
   )
 }
