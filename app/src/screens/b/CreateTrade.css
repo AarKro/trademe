@@ -152,3 +152,14 @@
 }
 
 .create-trade .action-bar button { width: 100%; }
+
+.create-trade__options {
+  padding: 0;
+  border: 0;
+  margin: 0;
+}
+
+.create-trade__options legend {
+  padding: 0;
+  margin-bottom: var(--space-stack-xs);
+}

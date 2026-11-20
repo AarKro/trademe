@@ -4,6 +4,7 @@ import { ActionBar } from '../../components/ActionBar'
 import { AppBar } from '../../components/AppBar'
 import { Button } from '../../components/Button'
 import { useAuth } from '../../lib/auth'
+import type { PaymentMethod } from '../../lib/types'
 import { supabase } from '../../lib/supabase'
 import { geocodeLocality } from './geocode'
 import './CreateTrade.css'
@@ -12,7 +13,14 @@ const categories = ['Möbelaufbau', 'Umzug', 'Garten', 'Haushalt', 'Technik', 'S
 const categoryLabels: Record<string, string> = { Garten: 'Gartenarbeit', Haushalt: 'Hilfe im Haushalt', Technik: 'Technikhilfe' }
 const photoTypes = new Map([['image/jpeg', 'jpg'], ['image/png', 'png'], ['image/webp', 'webp']])
 
-type FieldName = 'title' | 'location' | 'when' | 'budget' | 'photos'
+const paymentOptions: { value: PaymentMethod; label: string }[] = [
+  { value: 'twint', label: 'TWINT' },
+  { value: 'karte', label: 'Karte' },
+  { value: 'bar', label: 'Bar' },
+]
+const suggestedTags = ['Werkzeug', 'Montage', 'Transport']
+
+type FieldName = 'title' | 'location' | 'when' | 'until' | 'street' | 'zip' | 'city' | 'payment' | 'budget' | 'photos'
 type Errors = Partial<Record<FieldName, string>>
 
 function Field({ id, label, error, children }: {
@@ -45,6 +53,11 @@ export function CreateTrade() {
   const [category, setCategory] = useState(categories[0])
   const [more, setMore] = useState(false)
   const [remote, setRemote] = useState(false)
+  const [span, setSpan] = useState(false)
+  const [tags, setTags] = useState<string[]>([])
+  const [tag, setTag] = useState('')
+  const pendingAddress = useRef<{ trade_id: string; street: string; zip: string; city: string } | null>(null)
+  const [addressPending, setAddressPending] = useState(false)
   const [errors, setErrors] = useState<Errors>({})
   const [message, setMessage] = useState('')
   const [published, setPublished] = useState(false)
@@ -52,16 +65,59 @@ export function CreateTrade() {
   const submitting = useRef(false)
   const form = useRef<HTMLFormElement>(null)
 
+  function addTag(value: string) {
+    const clean = value.trim()
+    if (clean && !tags.some((existing) => existing.toLowerCase() === clean.toLowerCase())) {
+      setTags([...tags, clean])
+    }
+    setTag('')
+  }
+
+  async function saveAddress() {
+    if (pendingAddress.current) {
+      const { error } = await supabase.from('trade_addresses').upsert(pendingAddress.current)
+      if (error) throw error
+      pendingAddress.current = null
+      setAddressPending(false)
+    }
+    setPublished(true)
+    setMessage('Dein Trade ist veröffentlicht.')
+  }
+
   async function publish(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (submitting.current || published || !session) return
+
+    if (pendingAddress.current) {
+      submitting.current = true
+      setBusy(true)
+      try {
+        await saveAddress()
+      } catch {
+        setMessage('Der Trade ist veröffentlicht. Die Adresse konnte nicht gespeichert werden. Versuche es erneut.')
+      } finally {
+        submitting.current = false
+        setBusy(false)
+      }
+      return
+    }
 
     const data = new FormData(event.currentTarget)
     const title = String(data.get('title')).trim()
     const location = remote ? '' : String(data.get('location')).trim()
     const description = String(data.get('description')).trim()
     const when = String(data.get('when'))
-    const scheduled = when ? new Date(when) : null
+    const wantedFrom = new Date(when)
+    const wantedUntil = span ? new Date(String(data.get('until'))) : null
+    const street = String(data.get('street') ?? '').trim()
+    const zip = String(data.get('zip') ?? '').trim()
+    const city = String(data.get('city') ?? '').trim()
+    const paymentMethods = data.getAll('payment')
+    const tradeTags = tags.slice()
+    const extraTag = tag.trim()
+    if (extraTag && !tradeTags.some((existing) => existing.toLowerCase() === extraTag.toLowerCase())) {
+      tradeTags.push(extraTag)
+    }
     const budget = String(data.get('budget')).trim().replace(',', '.')
     const files = data.getAll('photos').filter((file): file is File => file instanceof File && file.size > 0)
     const invalid: Errors = {}
@@ -71,9 +127,16 @@ export function CreateTrade() {
     if (!/^\d{1,8}(\.\d{1,2})?$/.test(budget) || Number(budget) <= 0) {
       invalid.budget = 'Gib einen Betrag über CHF 0 ein.'
     }
-    if (scheduled && (!Number.isFinite(scheduled.getTime()) || scheduled.getTime() <= Date.now())) {
-      invalid.when = 'Wähle einen Termin in der Zukunft.'
+    if (!Number.isFinite(wantedFrom.getTime()) || wantedFrom.getTime() <= Date.now()) {
+      invalid.when = 'Wähle einen Zeitpunkt in der Zukunft.'
     }
+    if (wantedUntil && (!Number.isFinite(wantedUntil.getTime()) || wantedUntil <= wantedFrom)) {
+      invalid.until = 'Wähle einen Endzeitpunkt nach dem Beginn.'
+    }
+    if (!remote && !street) invalid.street = 'Gib Strasse und Hausnummer ein.'
+    if (!remote && !zip) invalid.zip = 'Gib die PLZ ein.'
+    if (!remote && !city) invalid.city = 'Gib den Ort ein.'
+    if (!paymentMethods.length) invalid.payment = 'Wähle mindestens eine Zahlungsart.'
     if (files.length > 5 || files.some((file) => !photoTypes.has(file.type) || file.size > 5 * 1024 * 1024)) {
       invalid.photos = 'Wähle bis zu 5 JPG-, PNG- oder WebP-Fotos mit je höchstens 5 MB.'
     }
@@ -116,8 +179,10 @@ export function CreateTrade() {
         paths.push(path)
       }
 
+      const tradeId = crypto.randomUUID()
       insertStarted = true
       const { error, status } = await supabase.from('trades').insert({
+        id: tradeId,
         client_id: session.user.id,
         title,
         description: description || null,
@@ -127,17 +192,27 @@ export function CreateTrade() {
         location: location || null,
         lat: coords?.lat ?? null,
         lng: coords?.lng ?? null,
-        scheduled_at: scheduled?.toISOString() ?? null,
+        wanted_from: wantedFrom.toISOString(),
+        wanted_until: wantedUntil?.toISOString() ?? null,
+        tags: tradeTags,
+        payment_methods: paymentMethods,
         photo_urls: paths.map((path) => storage.getPublicUrl(path).data.publicUrl),
       })
       if (error) {
         insertStarted = status === 0 || status >= 500
         throw error
       }
-      setPublished(true)
-      setMessage('Dein Trade ist veröffentlicht.')
+      if (!remote) {
+        pendingAddress.current = { trade_id: tradeId, street, zip, city }
+        setAddressPending(true)
+      }
+      await saveAddress()
     } catch {
       if (!insertStarted && paths.length) await storage.remove(paths)
+      if (pendingAddress.current) {
+        setMessage('Der Trade ist veröffentlicht. Die Adresse konnte nicht gespeichert werden. Versuche es erneut.')
+        return
+      }
       setMessage(insertStarted
         ? 'Die Veröffentlichung konnte nicht bestätigt werden. Prüfe zuerst, ob dein Trade bereits sichtbar ist.'
         : 'Dein Trade konnte nicht veröffentlicht werden. Versuche es erneut.')
@@ -154,7 +229,7 @@ export function CreateTrade() {
     <main className="screen screen--with-action-bar">
       <AppBar title="Trade erstellen" />
       <form ref={form} className="create-trade" onSubmit={publish} noValidate>
-        <fieldset className="create-trade__fields" aria-label="Trade erstellen" disabled={busy || published}>
+        <fieldset className="create-trade__fields" aria-label="Trade erstellen" disabled={busy || published || addressPending}>
           {errorCount > 0 && (
             <div className="create-trade__banner" role="alert">
               <CircleAlert aria-hidden />
@@ -175,7 +250,20 @@ export function CreateTrade() {
           <Field id="title" label="Was brauchst du?" error={errors.title}>
             <input {...fieldProps('title', errors)} required placeholder="Z. B. Deckenlampe im Wohnzimmer montieren" />
           </Field>
-          <Field id="location" label="Ort" error={remote ? undefined : errors.location}>
+          <div className="field">
+            <label className="text-label" htmlFor="wanted-mode">Wann soll die Hilfe stattfinden?</label>
+            <select className="input text-body" id="wanted-mode" value={span ? 'span' : 'from'} onChange={(event) => setSpan(event.target.value === 'span')}>
+              <option value="from">Ab Zeitpunkt</option>
+              <option value="span">Zeitspanne von–bis</option>
+            </select>
+            <Field id="when" label="Von" error={errors.when}>
+              <input {...fieldProps('when', errors)} type="datetime-local" required />
+            </Field>
+            {span && <Field id="until" label="Bis" error={errors.until}>
+              <input {...fieldProps('until', errors)} type="datetime-local" required />
+            </Field>}
+          </div>
+          <Field id="location" label="Ort oder Quartier für die Karte" error={remote ? undefined : errors.location}>
             <input {...fieldProps('location', remote ? {} : errors)} disabled={remote} required={!remote} placeholder="Zürich, Kreis 4" aria-describedby={errors.location && !remote ? 'location-error location-help' : 'location-help'} />
             <div className="create-trade__location-options text-body" id="location-help">
               <label><input type="checkbox" checked={remote} onChange={(event) => {
@@ -187,13 +275,51 @@ export function CreateTrade() {
             <p className="text-body">Wähle Remote, wenn die helfende Person dafür nicht vor Ort sein muss.</p>
             {!remote && <p className="text-body">Nur PLZ, Ort oder Quartier eingeben. Die Ortssuche fragt OpenStreetMap ab.</p>}
           </Field>
-          <div className="create-trade__row">
-            <Field id="when" label="Wann" error={errors.when}>
-              <input {...fieldProps('when', errors)} type="datetime-local" />
+          {!remote && <div className="field">
+            <p className="text-body">Die helfende Person sieht die Adresse erst nach der Zahlung. Bei Barzahlung sieht sie die Adresse nach der Vergabe.</p>
+            <Field id="street" label="Strasse und Hausnummer" error={errors.street}>
+              <input {...fieldProps('street', errors)} autoComplete="street-address" required />
             </Field>
-            <Field id="budget" label="Budget" error={errors.budget}>
-              <input {...fieldProps('budget', errors)} required inputMode="decimal" placeholder="CHF" />
-            </Field>
+            <div className="create-trade__row">
+              <Field id="zip" label="PLZ" error={errors.zip}>
+                <input {...fieldProps('zip', errors)} autoComplete="postal-code" required />
+              </Field>
+              <Field id="city" label="Ort" error={errors.city}>
+                <input {...fieldProps('city', errors)} autoComplete="address-level2" required />
+              </Field>
+            </div>
+          </div>}
+          <Field id="budget" label="Budget" error={errors.budget}>
+            <input {...fieldProps('budget', errors)} required inputMode="decimal" placeholder="CHF" />
+          </Field>
+          <fieldset className="create-trade__options">
+            <legend className="text-label">Akzeptierte Zahlungsarten</legend>
+            <div className="create-trade__chips">
+              {paymentOptions.map(({ value, label }, index) => (
+                <label className="text-body" key={value}>
+                  <input id={index === 0 ? 'payment' : undefined} type="checkbox" name="payment" value={value} defaultChecked /> {label}
+                </label>
+              ))}
+            </div>
+            {errors.payment && <p className="create-trade__error text-body">{errors.payment}</p>}
+          </fieldset>
+          <div className="field">
+            <label className="text-label" htmlFor="trade-tag">Stichwörter (optional)</label>
+            <div className="create-trade__row">
+              <input id="trade-tag" className="input text-body" value={tag} maxLength={40} placeholder="Z. B. IKEA" onChange={(event) => setTag(event.target.value)} onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  addTag(tag)
+                }
+              }} />
+              <Button type="button" variant="secondary" disabled={!tag.trim()} onClick={() => addTag(tag)}>Hinzufügen</Button>
+            </div>
+            <div className="create-trade__chips">
+              {tags.map((value) => <button key={value} className="text-label" type="button" aria-label={value + ' entfernen'} onClick={() => setTags(tags.filter((item) => item !== value))}>{value} ×</button>)}
+              {suggestedTags.filter((value) => !tags.some((item) => item.toLowerCase() === value.toLowerCase())).map((value) => (
+                <button className="text-label" key={value} type="button" onClick={() => addTag(value)}>+ {value}</button>
+              ))}
+            </div>
           </div>
           <details className="create-trade__details">
             <summary>
@@ -216,12 +342,15 @@ export function CreateTrade() {
             ? <Button type="button" onClick={() => {
               form.current?.reset()
               setRemote(false)
+              setSpan(false)
+              setTags([])
+              setTag('')
               setCategory(categories[0])
               setMore(false)
               setMessage('')
               setPublished(false)
             }}>Weiteren Trade erstellen</Button>
-            : <Button type="submit" disabled={busy}>{busy ? 'Wird veröffentlicht …' : 'Trade veröffentlichen'}</Button>}
+            : <Button type="submit" disabled={busy}>{busy ? 'Wird veröffentlicht …' : addressPending ? 'Adresse erneut speichern' : 'Trade veröffentlichen'}</Button>}
         </ActionBar>
       </form>
     </main>

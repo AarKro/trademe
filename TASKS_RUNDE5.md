@@ -64,7 +64,7 @@ Priorität: **P1** = Lücke im Ablauf, **P2** = unklar/schlecht sichtbar, **P3**
   - Hinweistexte grösser: `text-body` statt `text-caption`, gut lesbarer Kontrast.
   - Beispieltexte konkret formulieren (Platzhalter wie «z.B. Deckenlampe im Wohnzimmer montieren»), Kategorien verständlich benennen. Ein Feld «Gruppe» darf es nicht geben bzw. es muss erklärt sein.
   - «Überall» → beschriften als «Remote / von überall möglich» und kurz erklären.
-- [ ] **B-2 (P1/P2) Datum, Adresse, Filterangaben beim Erstellen** 🔒 (A-1)
+- [x] **B-2 (P1/P2) Datum, Adresse, Filterangaben beim Erstellen** 🔒 (A-1)
   - «Wann» wird Pflicht und steht weiter oben: Auswahl «Ab Zeitpunkt» oder «Zeitspanne von–bis» (`wanted_from`, `wanted_until`).
   - Adresse (Strasse, PLZ, Ort) in `trade_addresses` speichern, mit Hinweis «Die helfende Person sieht die Adresse erst nach der Zahlung». Das grobe Quartier bleibt in `location`.
   - Tags (Chips, frei + Vorschläge) und akzeptierte Zahlungsarten erfassen.
