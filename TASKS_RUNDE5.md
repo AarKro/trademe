@@ -95,7 +95,7 @@ Priorität: **P1** = Lücke im Ablauf, **P2** = unklar/schlecht sichtbar, **P3**
   - Abgelehntes Angebot freundlich anzeigen (🔒 A-1).
 - [ ] **C-3 (P1) Adresse nach der Zahlung zeigen** 🔒 (A-1)
   In C/08 / C/05 die volle Adresse aus `trade_addresses` anzeigen, mit Link «In Karte öffnen». Vorher nur das Quartier und der Hinweis «Adresse siehst du nach der Zahlung».
-- [ ] **C-4 (P2) Filter in Entdecken** 🟢 Preis/Remote · 🔒 Tags/Zahlungsart
+- [x] **C-4 (P2) Filter in Entdecken** 🟢 Preis/Remote · 🔒 Tags/Zahlungsart (Preis/Remote umgesetzt; Tags/Zahlungsart warten auf A-1)
   Filter-Sheet (Bottom-Sheet) mit: Tags, Zahlungsart, Preisbereich (min–max CHF), «Remote». Aktive Filter als Chips mit ×. Gilt für Karte und Liste.
 - [ ] **C-5 (P3) Karte: Standort und Trades in der Nähe** 🟢 (Profil-Speicherung 🔒)
   «Meinen Standort verwenden» (Browser-Geolocation) oder Adresse eingeben (`screens/b/geocode.ts` wiederverwenden) → Karte zentriert sich, Pin für «mich», Radius-Chip (2 / 5 / 10 km) filtert wirklich, Liste «Nach Distanz» sortiert wirklich. Remote-Trades bleiben sichtbar (Abschnitt «Remote»). Gewählten Standort in `profiles.home_*` merken, sobald A-1 da ist.
