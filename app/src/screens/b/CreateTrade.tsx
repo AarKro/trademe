@@ -1,8 +1,9 @@
-import { Camera, CircleAlert, Plus } from 'lucide-react'
+import { Camera, CircleAlert, Plus, Clock } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ActionBar } from '../../components/ActionBar'
 import { AppBar } from '../../components/AppBar'
+import { BottomSheet } from '../../components/BottomSheet'
 import { Button } from '../../components/Button'
 import { useAuth } from '../../lib/auth'
 import type { PaymentMethod, Trade, TradeAddress } from '../../lib/types'
@@ -98,6 +99,15 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
   const [more, setMore] = useState(Boolean(initialTrade?.category && !categories.slice(0, 3).includes(initialTrade.category)))
   const [remote, setRemote] = useState(initialTrade?.is_remote ?? false)
   const [span, setSpan] = useState(Boolean(initialTrade?.wanted_until))
+  const initialStart = localDateTime(initialTrade?.wanted_from)
+  const initialEnd = localDateTime(initialTrade?.wanted_until)
+  const [fromDate, setFromDate] = useState(initialStart?.slice(0, 10) ?? '')
+  const [untilDate, setUntilDate] = useState(initialEnd?.slice(0, 10) ?? '')
+  const [fromTime, setFromTime] = useState(initialStart?.slice(11) === '00:00' ? '' : initialStart?.slice(11) ?? '')
+  const [untilTime, setUntilTime] = useState(initialEnd?.slice(11) === '23:59' ? '' : initialEnd?.slice(11) ?? '')
+  const [startDateTime, setStartDateTime] = useState(initialStart ?? '')
+  const [timeField, setTimeField] = useState<'when' | 'until' | null>(null)
+  const timeInput = useRef<HTMLInputElement>(null)
   const [tags, setTags] = useState<string[]>(initialTrade?.tags ?? [])
   const [tag, setTag] = useState('')
   const pendingAddress = useRef<AddressChange | null>(null)
@@ -157,10 +167,17 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
     const title = String(data.get('title')).trim()
     const location = remote ? '' : String(data.get('location')).trim()
     const description = String(data.get('description')).trim()
-    const when = String(data.get('when'))
-    const sameStart = Boolean(initialTrade && when === localDateTime(initialTrade.wanted_from))
-    const wantedFrom = new Date(sameStart ? initialTrade!.wanted_from : when)
-    const wantedUntil = span ? new Date(String(data.get('until'))) : null
+    const when = String(data.get('when') ?? '')
+    const until = String(data.get('until') ?? '')
+    const startValue = span && when ? when + 'T' + (fromTime || '00:00') : when
+    const endValue = until ? until + 'T' + (untilTime || '23:59:59.999') : ''
+    const sameStart = Boolean(initialTrade && startValue === initialStart)
+    const wantedFrom = new Date(sameStart ? initialTrade!.wanted_from : startValue)
+    const wantedUntil = span ? new Date(endValue) : null
+    const earliest = new Date()
+    const dateOnlyStart = span && !fromTime
+    if (dateOnlyStart) earliest.setHours(0, 0, 0, 0)
+    const tooEarly = dateOnlyStart ? wantedFrom < earliest : wantedFrom <= earliest
     const street = String(data.get('street') ?? '').trim()
     const zip = String(data.get('zip') ?? '').trim()
     const city = String(data.get('city') ?? '').trim()
@@ -179,8 +196,8 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
     if (!/^\d{1,8}(\.\d{1,2})?$/.test(budget) || Number(budget) <= 0) {
       invalid.budget = 'Gib einen Betrag über CHF 0 ein.'
     }
-    if (!Number.isFinite(wantedFrom.getTime()) || (!sameStart && wantedFrom.getTime() <= Date.now())) {
-      invalid.when = 'Wähle einen Zeitpunkt in der Zukunft.'
+    if (!Number.isFinite(wantedFrom.getTime()) || (!sameStart && tooEarly)) {
+      invalid.when = dateOnlyStart ? 'Wähle das heutige Datum oder ein späteres Datum.' : 'Wähle einen Zeitpunkt in der Zukunft.'
     }
     if (wantedUntil && (!Number.isFinite(wantedUntil.getTime()) || wantedUntil <= wantedFrom)) {
       invalid.until = 'Wähle einen Endzeitpunkt nach dem Beginn.'
@@ -288,6 +305,13 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
     }
   }
 
+  function saveTime(value: string) {
+    if (timeField === 'when') setFromTime(value)
+    else setUntilTime(value)
+    setTimeField(null)
+  }
+
+  const availableSuggestions = suggestedTags.filter((value) => !tags.some((item) => item.toLowerCase() === value.toLowerCase()))
   const errorCount = Object.keys(errors).length
   const titleAndLocation = errorCount === 2 && errors.title && errors.location
 
@@ -318,15 +342,33 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
           </Field>
           <div className="field">
             <label className="text-label" htmlFor="wanted-mode">Wann soll die Hilfe stattfinden?</label>
-            <select className="input text-body" id="wanted-mode" value={span ? 'span' : 'from'} onChange={(event) => setSpan(event.target.value === 'span')}>
+            <select className="input text-body" id="wanted-mode" value={span ? 'span' : 'from'} onChange={(event) => {
+              const useSpan = event.target.value === 'span'
+              if (useSpan) {
+                setFromDate(startDateTime.slice(0, 10) || fromDate)
+                if (startDateTime) setFromTime(startDateTime.slice(11))
+              } else {
+                setStartDateTime(fromDate && fromTime ? fromDate + 'T' + fromTime : '')
+              }
+              setSpan(useSpan)
+            }}>
               <option value="from">Ab Zeitpunkt</option>
               <option value="span">Zeitspanne von–bis</option>
             </select>
             <Field id="when" label="Von" error={errors.when}>
-              <input {...fieldProps('when', errors)} type="datetime-local" defaultValue={localDateTime(initialTrade?.wanted_from)} required />
+              <input key={span ? 'date' : 'datetime'} {...fieldProps('when', errors)} type={span ? 'date' : 'datetime-local'} value={span ? fromDate : startDateTime} onChange={(event) => {
+                if (span) setFromDate(event.target.value)
+                else setStartDateTime(event.target.value)
+              }} required />
+              {span && <Button type="button" variant="secondary" onClick={() => setTimeField('when')}>
+                <Clock aria-hidden /> {fromTime ? 'Von ' + fromTime + ' Uhr' : 'Startzeit hinzufügen (optional)'}
+              </Button>}
             </Field>
             {span && <Field id="until" label="Bis" error={errors.until}>
-              <input {...fieldProps('until', errors)} type="datetime-local" defaultValue={localDateTime(initialTrade?.wanted_until)} required />
+              <input {...fieldProps('until', errors)} type="date" value={untilDate} onChange={(event) => setUntilDate(event.target.value)} required />
+              <Button type="button" variant="secondary" onClick={() => setTimeField('until')}>
+                <Clock aria-hidden /> {untilTime ? 'Bis ' + untilTime + ' Uhr' : 'Endzeit hinzufügen (optional)'}
+              </Button>
             </Field>}
           </div>
           <Field id="location" label="Ort oder Quartier für die Karte" error={remote ? undefined : errors.location}>
@@ -380,12 +422,20 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
               }} />
               <Button type="button" variant="secondary" disabled={!tag.trim()} onClick={() => addTag(tag)}>Hinzufügen</Button>
             </div>
-            <div className="create-trade__chips">
-              {tags.map((value) => <button key={value} className="text-label" type="button" aria-label={value + ' entfernen'} onClick={() => setTags(tags.filter((item) => item !== value))}>{value} ×</button>)}
-              {suggestedTags.filter((value) => !tags.some((item) => item.toLowerCase() === value.toLowerCase())).map((value) => (
-                <button className="text-label" key={value} type="button" onClick={() => addTag(value)}>+ {value}</button>
-              ))}
-            </div>
+            {tags.length > 0 && <>
+              <p className="text-label" id="selected-tags">Ausgewählt</p>
+              <div className="create-trade__chips create-trade__chips--selected" role="group" aria-labelledby="selected-tags">
+                {tags.map((value) => <button key={value} className="text-label" type="button" aria-label={value + ' entfernen'} onClick={() => setTags(tags.filter((item) => item !== value))}>{value} ×</button>)}
+              </div>
+            </>}
+            {availableSuggestions.length > 0 && <>
+              <p className="text-label" id="suggested-tags">Vorschläge</p>
+              <div className="create-trade__chips create-trade__chips--suggested" role="group" aria-labelledby="suggested-tags">
+                {availableSuggestions.map((value) => (
+                  <button className="text-label" key={value} type="button" onClick={() => addTag(value)}>+ {value}</button>
+                ))}
+              </div>
+            </>}
           </div>
           <details className="create-trade__details">
             <summary>
@@ -409,6 +459,11 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
               form.current?.reset()
               setRemote(false)
               setSpan(false)
+              setFromDate('')
+              setUntilDate('')
+              setStartDateTime('')
+              setFromTime('')
+              setUntilTime('')
               setTags([])
               setTag('')
               setCategory(categories[0])
@@ -419,6 +474,14 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
             : <Button type="submit" disabled={busy}>{busy ? 'Wird gespeichert …' : addressPending ? 'Adresse erneut speichern' : editing ? 'Änderungen speichern' : 'Trade veröffentlichen'}</Button>}
         </ActionBar>
       </form>
+      <BottomSheet open={timeField !== null} title={timeField === 'when' ? 'Startzeit (optional)' : 'Endzeit (optional)'} onClose={() => setTimeField(null)}>
+        <label className="field text-label">
+          Uhrzeit
+          <input className="input text-body" type="time" ref={timeInput} defaultValue={timeField === 'when' ? fromTime : untilTime} />
+        </label>
+        <Button type="button" onClick={() => saveTime(timeInput.current?.value ?? '')}>Uhrzeit übernehmen</Button>
+        <Button type="button" variant="text" onClick={() => saveTime('')}>Ohne Uhrzeit</Button>
+      </BottomSheet>
     </main>
   )
 }

@@ -163,3 +163,15 @@
   padding: 0;
   margin-bottom: var(--space-stack-xs);
 }
+
+.create-trade__chips--selected button {
+  background: var(--color-surface-accent-subtle);
+  border-color: var(--color-action-primary);
+  color: var(--color-text-accent);
+}
+
+.create-trade__chips--suggested button {
+  background: var(--color-surface-default);
+  border-color: var(--color-border-control);
+  border-style: dashed;
+}
