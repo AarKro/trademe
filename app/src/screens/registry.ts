@@ -53,6 +53,12 @@ export const screens: ScreenDef[] = [
     ],
   },
   {
+    path: '/erstellen/veroeffentlicht',
+    title: 'Trade veröffentlicht',
+    owner: 'B',
+    frames: [],
+  },
+  {
     path: '/chat',
     title: 'Chat',
     owner: 'C',
