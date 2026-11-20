@@ -29,3 +29,7 @@
 .helper-detail__handle { align-self: center; width: var(--size-sheet-handle); height: var(--stroke-strong); margin-bottom: var(--space-inset-xs); border-radius: var(--radius-badge); background: var(--color-border-default); }
 .helper-detail__form { display: flex; flex-direction: column; gap: var(--space-stack-sm); }
 .helper-detail__textarea { min-height: var(--size-textarea); resize: vertical; padding: var(--space-inset-md); border: var(--stroke-default) solid var(--color-border-control); border-radius: var(--radius-control); background: var(--color-surface-default); }
+
+/* #45 · tags from B/01 */
+.helper-detail__tags { display: flex; flex-wrap: wrap; gap: var(--space-stack-xs); margin: 0; padding: 0; list-style: none; }
+.helper-detail__tags li { padding: var(--space-inset-xs) var(--space-inset-md); border-radius: var(--radius-badge); background: var(--color-surface-muted); color: var(--color-text-secondary); }

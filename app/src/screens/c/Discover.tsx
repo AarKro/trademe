@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase'
 import type { Trade } from '../../lib/types'
 import 'leaflet/dist/leaflet.css'
 import './Discover.css'
+import { formatWanted } from '../../lib/format'
 
 const zurich: [number, number] = [47.3769, 8.5417]
 type Coordinates = { lat: number; lng: number }
@@ -26,13 +27,9 @@ function formatDate(value: string | null) {
 }
 
 function formatTradeDate(trade: Trade) {
-  if (trade.status !== 'offen' || !trade.wanted_from) return formatDate(trade.scheduled_at)
-  const from = new Date(trade.wanted_from)
-  const until = trade.wanted_until ? new Date(trade.wanted_until) : null
-  const date = new Intl.DateTimeFormat('de-CH', { day: '2-digit', month: '2-digit' }).format(from)
-  const time = new Intl.DateTimeFormat('de-CH', { hour: '2-digit', minute: '2-digit' }).format(from)
-  if (!until) return `ab ${date}, ${time}`
-  return `${date}–${new Intl.DateTimeFormat('de-CH', { day: '2-digit', month: '2-digit' }).format(until)}`
+  // open: when the client wants it (B/01) · later: the agreed appointment
+  if (trade.status === 'offen' && trade.wanted_from) return formatWanted(trade.wanted_from, trade.wanted_until)
+  return formatDate(trade.scheduled_at)
 }
 
 function formatLocation(trade: Trade) {
