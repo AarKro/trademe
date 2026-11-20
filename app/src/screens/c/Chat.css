@@ -34,14 +34,12 @@
 .chat-thread__context svg, .chat-thread__system svg { flex: none; width: var(--size-icon-sm); height: var(--size-icon-sm); }
 .chat-composer__send svg { width: var(--size-icon-md); height: var(--size-icon-md); }
 
-.chat-reactions, .chat-reactions__options {
+.chat-reactions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-inline-xs);
 }
-
-.chat-reactions__options { flex-basis: 100%; }
 
 .chat-reactions button {
   display: inline-grid;
@@ -61,7 +59,44 @@
   background: var(--color-surface-accent-subtle);
 }
 
-.chat-reactions svg {
-  width: var(--size-icon-sm);
-  height: var(--size-icon-sm);
+/* bubble gestures: double tap = heart, tap and hold = picker. No double-tap zoom, no text-selection callout. */
+.chat-thread__bubble {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: transform .15s ease-out;
+}
+.chat-thread__bubble--active { transform: scale(1.03); box-shadow: var(--shadow-raised); }
+
+.reaction-picker__backdrop { position: fixed; inset: 0; z-index: 10; }
+.reaction-picker {
+  position: fixed;
+  z-index: 11;
+  display: flex;
+  gap: var(--space-inline-xs);
+  padding: var(--space-inset-xs);
+  border-radius: var(--radius-badge);
+  background: var(--color-surface-default);
+  box-shadow: var(--shadow-raised);
+  animation: reaction-picker-in .15s ease-out;
+}
+.reaction-picker--above { transform: translateY(calc(-100% - var(--space-stack-xs))); }
+.reaction-picker--below { transform: translateY(var(--space-stack-xs)); }
+.reaction-picker button {
+  display: grid;
+  place-items: center;
+  width: var(--size-avatar-md);
+  height: var(--size-avatar-md);
+  border: 0;
+  border-radius: var(--radius-badge);
+  background: none;
+  font-size: var(--size-icon-lg);
+  cursor: pointer;
+}
+.reaction-picker button[aria-checked="true"] { background: var(--color-surface-accent-subtle); }
+
+@keyframes reaction-picker-in { from { opacity: 0; scale: .8; } }
+@media (prefers-reduced-motion: reduce) {
+  .chat-thread__bubble, .reaction-picker { transition: none; animation: none; }
 }

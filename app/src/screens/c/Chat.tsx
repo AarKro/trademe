@@ -1,6 +1,6 @@
-import { ChevronRight, ListChecks, Send, SmilePlus } from 'lucide-react'
+import { ChevronRight, ListChecks, Send } from 'lucide-react'
 
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type PointerEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AppBar } from '../../components/AppBar'
 import { Avatar } from '../../components/Avatar'
@@ -22,6 +22,15 @@ const quickReactions = [
   { emoji: '😊', label: 'Lächeln' },
   { emoji: '🎉', label: 'Feiern' },
 ]
+const HEART = '❤️'
+// Gestures on a message bubble: double tap = heart, tap and hold = reaction picker
+const DOUBLE_TAP_MS = 300
+const LONG_PRESS_MS = 450
+const MOVE_TOLERANCE_PX = 10
+// Below this distance from the top of the screen the picker opens under the bubble (app bar + trade bar + picker)
+const PICKER_ROOM_ABOVE_PX = 160
+type ReactionMenu = { messageId: string; own: boolean; top: number; bottom: number; left: number; right: number }
+type Gesture = { messageId: string; x: number; y: number; timer: number; longPress: boolean }
 
 type Person = Pick<Profile, 'id' | 'display_name' | 'avatar_url'>
 type Conversation = {
@@ -181,7 +190,10 @@ function ChatConversation({ tradeId, helperId, me }: { tradeId: string; helperId
   const [other, setOther] = useState<Profile | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [reactions, setReactions] = useState<Reaction[]>([])
-  const [reactionMenu, setReactionMenu] = useState<string | null>(null)
+  const [reactionMenu, setReactionMenu] = useState<ReactionMenu | null>(null)
+  const gesture = useRef<Gesture | null>(null)
+  const lastTap = useRef<{ messageId: string; time: number } | null>(null)
+  const swallowClick = useRef(false)
   const [reactionError, setReactionError] = useState(false)
   const [reactionsAvailable, setReactionsAvailable] = useState(false)
   const pendingReaction = useRef(false)
@@ -279,13 +291,95 @@ function ChatConversation({ tradeId, helperId, me }: { tradeId: string; helperId
       const { error } = await supabase.rpc('set_message_reaction', { p_message_id: messageId, p_emoji: next })
       if (error) throw error
       updateReaction({ message_id: messageId, user_id: me, emoji: next })
-      setReactionMenu(null)
     } catch {
       setReactionError(true)
     } finally {
       pendingReaction.current = false
     }
   }
+
+  function openReactionMenu(messageId: string, own: boolean, bubble: HTMLElement) {
+    const { top, bottom, left, right } = bubble.getBoundingClientRect()
+    setReactionMenu({ messageId, own, top, bottom, left, right })
+  }
+
+  function chooseReaction(messageId: string, emoji: string) {
+    setReactionMenu(null)
+    void reactTo(messageId, emoji)
+  }
+
+  function cancelGesture() {
+    if (gesture.current) window.clearTimeout(gesture.current.timer)
+    gesture.current = null
+  }
+
+  // Reaction chips inside the bubble are buttons of their own and must not count as a tap on the message
+  const isOnButton = (event: { target: EventTarget }) => (event.target as Element).closest('button') !== null
+
+  function pressStart(event: PointerEvent<HTMLDivElement>, messageId: string, own: boolean) {
+    if (!reactionsAvailable || event.button !== 0 || isOnButton(event)) return
+    cancelGesture()
+    const bubble = event.currentTarget
+    const timer = window.setTimeout(() => {
+      if (!gesture.current) return
+      gesture.current.longPress = true
+      swallowClick.current = true
+      navigator.vibrate?.(10)
+      openReactionMenu(messageId, own, bubble)
+    }, LONG_PRESS_MS)
+    gesture.current = { messageId, x: event.clientX, y: event.clientY, timer, longPress: false }
+  }
+
+  function pressMove(event: PointerEvent) {
+    const g = gesture.current
+    if (g && Math.hypot(event.clientX - g.x, event.clientY - g.y) > MOVE_TOLERANCE_PX) cancelGesture()
+  }
+
+  function pressEnd(messageId: string) {
+    const g = gesture.current
+    cancelGesture()
+    if (!g || g.longPress || g.messageId !== messageId) return
+    const now = performance.now()
+    if (lastTap.current?.messageId === messageId && now - lastTap.current.time < DOUBLE_TAP_MS) {
+      lastTap.current = null
+      void reactTo(messageId, HEART)
+    } else {
+      lastTap.current = { messageId, time: now }
+    }
+  }
+
+  function bubbleKey(event: KeyboardEvent<HTMLDivElement>, messageId: string, own: boolean) {
+    if (!reactionsAvailable || !['Enter', ' ', 'ContextMenu'].includes(event.key)) return
+    event.preventDefault()
+    openReactionMenu(messageId, own, event.currentTarget)
+  }
+
+  // Some phones fire a click when the finger lifts after a long press. It would land on the picker's
+  // backdrop and close the picker right away, so swallow that one click.
+  useEffect(() => {
+    const onClick = (event: MouseEvent) => {
+      if (!swallowClick.current) return
+      swallowClick.current = false
+      event.preventDefault()
+      event.stopPropagation()
+    }
+    const onPointerDown = () => { swallowClick.current = false }
+    window.addEventListener('click', onClick, true)
+    window.addEventListener('pointerdown', onPointerDown, true)
+    return () => {
+      window.removeEventListener('click', onClick, true)
+      window.removeEventListener('pointerdown', onPointerDown, true)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!reactionMenu) return
+    const close = (event: globalThis.KeyboardEvent) => event.key === 'Escape' && setReactionMenu(null)
+    window.addEventListener('keydown', close)
+    return () => window.removeEventListener('keydown', close)
+  }, [reactionMenu])
+
+  useEffect(() => () => cancelGesture(), [])
 
   async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -339,10 +433,26 @@ function ChatConversation({ tradeId, helperId, me }: { tradeId: string; helperId
             </div>
           ) : (
             <div className={`chat-thread__row ${m.sender_id === me ? 'chat-thread__row--own' : ''}`} key={m.id}>
-              <div className="chat-thread__bubble">
+              <div
+                className={`chat-thread__bubble ${reactionMenu?.messageId === m.id ? 'chat-thread__bubble--active' : ''}`}
+                tabIndex={reactionsAvailable ? 0 : undefined}
+                onPointerDown={(event) => pressStart(event, m.id, m.sender_id === me)}
+                onPointerMove={pressMove}
+                onPointerUp={() => pressEnd(m.id)}
+                onPointerCancel={cancelGesture}
+                onPointerLeave={cancelGesture}
+                onKeyDown={(event) => bubbleKey(event, m.id, m.sender_id === me)}
+                onContextMenu={(event) => {
+                  // right click on desktop, long press on Android: open our picker instead of the browser menu
+                  if (!reactionsAvailable || isOnButton(event)) return
+                  event.preventDefault()
+                  cancelGesture()
+                  openReactionMenu(m.id, m.sender_id === me, event.currentTarget)
+                }}
+              >
                 <p className="text-body">{m.body}</p>
                 <time className="text-caption">{time.format(new Date(m.created_at))}</time>
-                {reactionsAvailable && <div className="chat-reactions">
+                {reactionsAvailable && reactions.some((item) => item.message_id === m.id && item.emoji) && <div className="chat-reactions">
                   {quickReactions.map(({ emoji, label }) => {
                     const votes = reactions.filter((item) => item.message_id === m.id && item.emoji === emoji)
                     if (votes.length === 0) return null
@@ -351,20 +461,16 @@ function ChatConversation({ tradeId, helperId, me }: { tradeId: string; helperId
                       aria-pressed={votes.some((item) => item.user_id === me)}
                       onClick={() => void reactTo(m.id, emoji)}>{emoji} {votes.length}</button>
                   })}
-                  <button type="button" aria-label="Auf Nachricht reagieren" aria-expanded={reactionMenu === m.id}
-                    onClick={() => setReactionMenu(reactionMenu === m.id ? null : m.id)}><SmilePlus aria-hidden /></button>
-                  {reactionMenu === m.id && <div className="chat-reactions__options" role="group" aria-label="Schnellreaktionen">
-                    {quickReactions.map(({ emoji, label }) => (
-                      <button key={emoji} type="button" aria-label={label}
-                        onClick={() => void reactTo(m.id, emoji)}>{emoji}</button>
-                    ))}
-                  </div>}
                 </div>}
               </div>
             </div>
           ),
         )}
       </main>
+      {reactionMenu && <ReactionPicker menu={reactionMenu}
+        current={reactions.find((item) => item.message_id === reactionMenu.messageId && item.user_id === me)?.emoji ?? null}
+        onChoose={(emoji) => chooseReaction(reactionMenu.messageId, emoji)}
+        onClose={() => setReactionMenu(null)} />}
       <form className="chat-composer" onSubmit={sendMessage}>
         <input
           className="chat-composer__input text-body"
@@ -378,5 +484,40 @@ function ChatConversation({ tradeId, helperId, me }: { tradeId: string; helperId
         </button>
       </form>
     </div>
+  )
+}
+
+/** Popover above (or below) the pressed bubble with all reactions. Choosing the current one removes it. */
+function ReactionPicker({ menu, current, onChoose, onClose }: {
+  menu: ReactionMenu
+  current: string | null
+  onChoose: (emoji: string) => void
+  onClose: () => void
+}) {
+  const first = useRef<HTMLButtonElement>(null)
+  useEffect(() => first.current?.focus({ preventScroll: true }), [])
+  const above = menu.top > PICKER_ROOM_ABOVE_PX
+  const width = document.documentElement.clientWidth
+  return (
+    <>
+      <div className="reaction-picker__backdrop" aria-hidden onClick={onClose} onContextMenu={(event) => event.preventDefault()} />
+      <div
+        className={`reaction-picker ${above ? 'reaction-picker--above' : 'reaction-picker--below'}`}
+        role="menu"
+        aria-label="Reaktion wählen"
+        style={{
+          top: above ? menu.top : menu.bottom,
+          // align with the bubble's outer edge: own messages sit on the right, the other person's on the left
+          ...(menu.own ? { right: width - menu.right } : { left: menu.left }),
+        }}
+      >
+        {quickReactions.map(({ emoji, label }, index) => (
+          <button key={emoji} ref={index === 0 ? first : undefined} type="button" role="menuitemradio"
+            aria-label={label} aria-checked={current === emoji} onClick={() => onChoose(emoji)}>
+            {emoji}
+          </button>
+        ))}
+      </div>
+    </>
   )
 }
