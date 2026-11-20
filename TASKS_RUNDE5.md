@@ -28,15 +28,15 @@ In Figma noch offen und nicht Teil dieser Runde: Verifizierungs-Flow (ID-Scan).
 Datenbankänderungen betreffen alle. Deshalb macht **A (Aaron) eine einzige Migration** für die ganze Runde. B und C bauen inzwischen alles, was ohne Datenbank geht (in den Listen mit 🟢 markiert). Aufgaben mit 🔒 warten, bis der PR **A-1** gemerged und die Migration eingespielt ist.
 
 **A-1 · Migration «Runde 5»** (`supabase/migrations/20261114000000_runde5.sql`)
-- [ ] **Adresse privat:** neue Tabelle `trade_addresses (trade_id pk, street, zip, city)`. RLS: Die auftraggebende Person liest und schreibt immer. Die helfende Person darf erst lesen, wenn `trades.helper_id = auth.uid()` und `payments.status in ('hinterlegt','freigegeben')` gilt oder die Methode `bar` ist. `trades.location` bleibt das grobe Quartier für Karte und Liste.
-- [ ] **Datum Pflicht + Zeitspanne:** `trades.wanted_from timestamptz not null` (für neue Trades), `trades.wanted_until timestamptz null`. `null` heisst «ab diesem Zeitpunkt». Bestehende Zeilen werden mit `created_at` befüllt. `scheduled_at` bleibt der vereinbarte Termin.
-- [ ] **Filter:** `trades.tags text[] default '{}'` und `trades.payment_methods payment_method[] default '{twint,karte,bar}'` (welche Zahlungsarten die auftraggebende Person akzeptiert).
-- [ ] **Löschen:** RPC `delete_trade(p_trade_id)`. Erlaubt nur der auftraggebenden Person, solange `status = 'offen'`. Offene Angebote werden auf `zurueckgezogen` gesetzt und die Helfenden benachrichtigt. **Bearbeiten** geht schon über die bestehende Policy «client edits open trade». Bitte prüfen, dass `status` dabei nicht änderbar ist (Trigger oder Spalten-Grant).
-- [ ] **Angebot ablehnen:** RPC `decline_offer(p_offer_id)` → `offers.status = 'abgelehnt'` + Benachrichtigung an die helfende Person.
-- [ ] **Benachrichtigungen:** Trigger, die `notify()` aufrufen bei neuer Chat-Nachricht (an die Gegenseite), Statuswechsel des Trades (`vergeben`, `zur_bestaetigung`, `abgeschlossen`, `problem`, `storniert`), abgelehntem Angebot und neuer Bewertung. `notifications` zur Realtime-Publication hinzufügen.
-- [ ] **Standort für die Karte:** `profiles.home_lat`, `profiles.home_lng`, `profiles.home_label` (optional, nur grob).
-- [ ] `app/src/lib/types.ts` und die Tabelle im README nachführen. Dry-Run zeigen, dann `npx supabase db push --remote`.
-- [ ] Im PR die neuen Felder und RPCs für B und C in einfachen Worten auflisten.
+- [x] **Adresse privat:** neue Tabelle `trade_addresses (trade_id pk, street, zip, city)`. RLS: Die auftraggebende Person liest und schreibt immer. Die helfende Person darf erst lesen, wenn `trades.helper_id = auth.uid()` und `payments.status in ('hinterlegt','freigegeben')` gilt oder die Methode `bar` ist. `trades.location` bleibt das grobe Quartier für Karte und Liste.
+- [x] **Datum Pflicht + Zeitspanne:** `trades.wanted_from timestamptz not null` (für neue Trades), `trades.wanted_until timestamptz null`. `null` heisst «ab diesem Zeitpunkt». Bestehende Zeilen werden mit `created_at` befüllt. `scheduled_at` bleibt der vereinbarte Termin.
+- [x] **Filter:** `trades.tags text[] default '{}'` und `trades.payment_methods payment_method[] default '{twint,karte,bar}'` (welche Zahlungsarten die auftraggebende Person akzeptiert).
+- [x] **Löschen:** RPC `delete_trade(p_trade_id)`. Erlaubt nur der auftraggebenden Person, solange `status = 'offen'`. Offene Angebote werden auf `zurueckgezogen` gesetzt und die Helfenden benachrichtigt. **Bearbeiten** geht schon über die bestehende Policy «client edits open trade». Bitte prüfen, dass `status` dabei nicht änderbar ist (Trigger oder Spalten-Grant).
+- [x] **Angebot ablehnen:** RPC `decline_offer(p_offer_id)` → `offers.status = 'abgelehnt'` + Benachrichtigung an die helfende Person.
+- [x] **Benachrichtigungen:** Trigger, die `notify()` aufrufen bei neuer Chat-Nachricht (an die Gegenseite), Statuswechsel des Trades (`vergeben`, `zur_bestaetigung`, `abgeschlossen`, `problem`, `storniert`), abgelehntem Angebot und neuer Bewertung. `notifications` zur Realtime-Publication hinzufügen.
+- [x] **Standort für die Karte:** `profiles.home_lat`, `profiles.home_lng`, `profiles.home_label` (optional, nur grob).
+- [x] `app/src/lib/types.ts` und die Tabelle im README nachführen. Dry-Run zeigen, dann `npx supabase db push --remote`.
+- [x] Im PR die neuen Felder und RPCs für B und C in einfachen Worten auflisten.
 
 ---
 
@@ -46,7 +46,7 @@ Priorität: **P1** = Lücke im Ablauf, **P2** = unklar/schlecht sichtbar, **P3**
 
 ### A · Profil, Bewertungen, Benachrichtigungen (Aaron)
 
-- [ ] **A-1** Migration (siehe oben). *Zuerst, damit B und C weiterkommen.*
+- [x] **A-1** Migration (siehe oben). *Zuerst, damit B und C weiterkommen.*
 - [ ] **A-2 (P1) Benachrichtigungen in der App** 🔒
   Glocke mit Zähler in der App-Bar der Tab-Roots (oder Punkt auf dem Bottom-Nav-Tab), neuer Screen `/benachrichtigungen` (Liste: Text, Zeit, ungelesen fett, Tipp → zum Trade/Chat, alles gelesen setzen). Live über Realtime. Ungelesene Chats zusätzlich als Punkt auf dem Tab «Chat». Route in `registry.ts` als Owner A eintragen. Gemeinsame Dateien (`AppBar`, `BottomNav`, `TabLayout`) → im PR erwähnen.
 - [ ] **A-3 (P1) Erhaltene Bewertungen im eigenen Profil** 🟢
