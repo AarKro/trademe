@@ -1,7 +1,8 @@
-import { Calendar, CircleCheck, Image as ImageIcon, ShieldQuestion, Star } from 'lucide-react'
+import { Calendar, CircleCheck, Image as ImageIcon, Ellipsis, ShieldQuestion, Star } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AppBar } from '../../components/AppBar'
+import { BottomSheet } from '../../components/BottomSheet'
 import { Button } from '../../components/Button'
 import { TradeLifecycle } from './TradeLifecycle'
 import { useAuth } from '../../lib/auth'
@@ -43,11 +44,11 @@ async function loadDetail(tradeId: string, userId: string, signal: AbortSignal):
   return { trade, offers, ratings }
 }
 
-function OfferCard({ offer, rating, tradeId, first }: {
+function OfferCard({ offer, rating, tradeId, onDecline }: {
   offer: OpenOffer
   rating?: Rating
   tradeId: string
-  first: boolean
+  onDecline: () => void
 }) {
   const navigate = useNavigate()
   const name = offer.helper?.display_name || 'Helfende Person'
@@ -57,9 +58,6 @@ function OfferCard({ offer, rating, tradeId, first }: {
   const checkout = '/trades/' + tradeId + '/checkout?' + new URLSearchParams({ offerId: offer.id })
   const chat = '/chat/' + tradeId + '/' + offer.helper_id
   const count = rating?.rating_count ?? 0
-  const accept = <Button variant={first ? 'primary' : 'secondary'} onClick={() => navigate(checkout)}>Annehmen</Button>
-  const chatButton = <Button variant="secondary" onClick={() => navigate(chat)}>Zum Chat</Button>
-
   return (
     <article className="trade-detail__offer">
       <div className="card trade-detail__offer-card">
@@ -87,9 +85,12 @@ function OfferCard({ offer, rating, tradeId, first }: {
           {proposed && <span><Calendar aria-hidden />{date.format(proposed)} · {time.format(proposed)}</span>}
         </div>
         {offer.message && <p className="text-body text-secondary trade-detail__message">{offer.message}</p>}
-        {!first && <div className="trade-detail__actions">{accept}{chatButton}</div>}
+        <div className="trade-detail__actions">
+          <Button onClick={() => navigate(checkout)}>Annehmen</Button>
+          <Button variant="secondary" onClick={() => navigate(chat)}>Chatten</Button>
+          <Button variant="text" onClick={onDecline}>Ablehnen</Button>
+        </div>
       </div>
-      {first && <div className="trade-detail__actions">{accept}{chatButton}</div>}
     </article>
   )
 }
@@ -149,6 +150,13 @@ export function TradeDetail() {
 }
 
 function TradeDetailContent({ tradeId, userId }: { tradeId: string; userId: string }) {
+  const navigate = useNavigate()
+  const [menu, setMenu] = useState<'actions' | 'delete' | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState(false)
+  const [declineId, setDeclineId] = useState<string | null>(null)
+  const [declining, setDeclining] = useState(false)
+  const [declineError, setDeclineError] = useState(false)
   const [attempt, setAttempt] = useState(0)
   const [state, setState] = useState<Detail | null | 'loading' | 'error'>('loading')
 
@@ -162,10 +170,44 @@ function TradeDetailContent({ tradeId, userId }: { tradeId: string; userId: stri
   }, [tradeId, userId, attempt])
 
   const detail = typeof state === 'object' ? state : null
+  async function deleteTrade() {
+    if (deleting) return
+    setDeleting(true)
+    setDeleteError(false)
+    const { error } = await supabase.rpc('delete_trade', { p_trade_id: tradeId })
+    if (error) {
+      setDeleteError(true)
+      setDeleting(false)
+      return
+    }
+    navigate('/trades', { replace: true })
+  }
+
+  async function declineOffer() {
+    if (!declineId || declining) return
+    setDeclining(true)
+    setDeclineError(false)
+    try {
+      const { error } = await supabase.rpc('decline_offer', { p_offer_id: declineId })
+      if (error) throw error
+      setState((previous) => previous && typeof previous === 'object'
+        ? { ...previous, offers: previous.offers.filter((offer) => offer.id !== declineId) }
+        : previous)
+      setDeclineId(null)
+      setAttempt((previous) => previous + 1)
+    } catch {
+      setDeclineError(true)
+    } finally {
+      setDeclining(false)
+    }
+  }
+
   const waiting = detail?.trade.status === 'offen' && detail.offers.length === 0
   return (
     <>
-      <AppBar back title={detail?.trade.status === 'zur_bestaetigung' ? 'Abschluss prüfen' : waiting || !detail?.offers.length ? 'Mein Trade' : detail.trade.title} />
+      <AppBar back action={detail?.trade.status === 'offen' && (
+        <button className="app-bar__back" type="button" aria-label="Trade-Optionen" onClick={() => setMenu('actions')}><Ellipsis aria-hidden /></button>
+      )} title={detail?.trade.status === 'zur_bestaetigung' ? 'Abschluss prüfen' : waiting || !detail?.offers.length ? 'Mein Trade' : detail.trade.title} />
       <main className="screen trade-detail">
         {state === 'loading' && <p className="text-body" role="status">Trade wird geladen …</p>}
         {state === 'error' && (
@@ -189,13 +231,29 @@ function TradeDetailContent({ tradeId, userId }: { tradeId: string; userId: stri
         {detail && detail.offers.length > 0 && (
           <section className="trade-detail__offers" aria-label="Angebote">
             <p className="text-caption text-secondary">{detail.trade.title} · Budget CHF {currency.format(detail.trade.budget_chf)}</p>
-            {detail.offers.map((offer, index) => (
+            {detail.offers.map((offer) => (
               <OfferCard key={offer.id} offer={offer} rating={detail.ratings.find(({ id }) => id === offer.helper_id)}
-                first={index === 0} tradeId={detail.trade.id} />
+                tradeId={detail.trade.id} onDecline={() => { setDeclineError(false); setDeclineId(offer.id) }} />
             ))}
           </section>
         )}
       </main>
+      <BottomSheet open={Boolean(declineId)} title="Angebot ablehnen?" onClose={() => { if (!declining) setDeclineId(null) }}>
+        <p className="text-body">Die helfende Person wird benachrichtigt. Das Angebot verschwindet aus deiner Liste.</p>
+        {declineError && <p className="text-body" role="alert">Das Angebot konnte nicht abgelehnt werden. Versuche es erneut.</p>}
+        <Button disabled={declining} onClick={() => void declineOffer()}>{declining ? 'Wird abgelehnt …' : 'Angebot ablehnen'}</Button>
+        <Button variant="text" disabled={declining} onClick={() => setDeclineId(null)}>Abbrechen</Button>
+      </BottomSheet>
+      <BottomSheet open={menu === 'actions'} title="Trade-Optionen" onClose={() => setMenu(null)}>
+        <Button onClick={() => navigate('/trades/' + tradeId + '/bearbeiten')}>Bearbeiten</Button>
+        <Button variant="secondary" onClick={() => { setDeleteError(false); setMenu('delete') }}>Löschen</Button>
+      </BottomSheet>
+      <BottomSheet open={menu === 'delete'} title="Trade löschen?" onClose={() => { if (!deleting) setMenu(null) }}>
+        <p className="text-body">Dein Trade mit seinen Angeboten und Chats wird endgültig gelöscht.</p>
+        {deleteError && <p className="text-body" role="alert">Der Trade konnte nicht gelöscht werden. Prüfe, ob er noch offen ist.</p>}
+        <Button disabled={deleting} onClick={() => void deleteTrade()}>{deleting ? 'Wird gelöscht …' : 'Trade löschen'}</Button>
+        <Button disabled={deleting} variant="text" onClick={() => setMenu(null)}>Abbrechen</Button>
+      </BottomSheet>
     </>
   )
 }

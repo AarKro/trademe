@@ -64,15 +64,15 @@ Priorität: **P1** = Lücke im Ablauf, **P2** = unklar/schlecht sichtbar, **P3**
   - Hinweistexte grösser: `text-body` statt `text-caption`, gut lesbarer Kontrast.
   - Beispieltexte konkret formulieren (Platzhalter wie «z.B. Deckenlampe im Wohnzimmer montieren»), Kategorien verständlich benennen. Ein Feld «Gruppe» darf es nicht geben bzw. es muss erklärt sein.
   - «Überall» → beschriften als «Remote / von überall möglich» und kurz erklären.
-- [ ] **B-2 (P1/P2) Datum, Adresse, Filterangaben beim Erstellen** 🔒 (A-1)
+- [x] **B-2 (P1/P2) Datum, Adresse, Filterangaben beim Erstellen** 🔒 (A-1)
   - «Wann» wird Pflicht und steht weiter oben: Auswahl «Ab Zeitpunkt» oder «Zeitspanne von–bis» (`wanted_from`, `wanted_until`).
   - Adresse (Strasse, PLZ, Ort) in `trade_addresses` speichern, mit Hinweis «Die helfende Person sieht die Adresse erst nach der Zahlung». Das grobe Quartier bleibt in `location`.
   - Tags (Chips, frei + Vorschläge) und akzeptierte Zahlungsarten erfassen.
-- [ ] **B-3 (P1) Eigene Trades bearbeiten und löschen** 🟢 bearbeiten / 🔒 löschen
+- [x] **B-3 (P1) Eigene Trades bearbeiten und löschen** 🟢 bearbeiten / 🔒 löschen
   Im Trade-Detail (Status `offen`): Menü in der App-Bar → «Bearbeiten» (gleiches Formular wie Erstellen, vorausgefüllt, `update` auf `trades`) und «Löschen» (Bestätigungs-Sheet → `rpc('delete_trade')`). Nach `vergeben` gibt es nur «Stornieren» (gibt es schon).
 - [x] **B-4 (P1) «Meine Trades» / «Meine Angebote»** 🟢
   Umschalter oben in `/trades`. «Meine Trades» = Trades, die ich erstellt habe. «Meine Angebote» = Angebote, die ich gesendet habe, mit Status (offen / angenommen / abgelehnt) → Tipp öffnet `/auftraege/:id`. Die Gruppierung «Handlung nötig» bleibt pro Tab.
-- [ ] **B-5 (P2) Klare Buttons bei Angeboten** 🟢 Annehmen/Chatten · 🔒 Ablehnen
+- [x] **B-5 (P2) Klare Buttons bei Angeboten** 🟢 Annehmen/Chatten · 🔒 Ablehnen
   Jede Angebotskarte in B/03b hat drei Aktionen: **Annehmen** (primär), **Chatten**, **Ablehnen** (Bestätigung → `rpc('decline_offer')`). Abgelehnte Angebote verschwinden aus der Liste.
 - [x] **B-6 (P1/P2) Checkout: übernehmen, zusammenfassen, erklären** 🟢
   - Preis und Termin kommen schon aus dem Angebot (`accept_offer` setzt `scheduled_at`). Das sichtbar machen: «Übernommen aus dem Angebot von …», nichts muss abgetippt werden.
