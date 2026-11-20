@@ -3,6 +3,7 @@ import { Calendar, ChevronRight, ExternalLink, Image as ImageIcon, MapPin, Walle
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AppBar } from '../../components/AppBar'
 import { Button } from '../../components/Button'
+import { StatusTimeline } from '../../components/StatusTimeline'
 import { useAuth } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
 import type { Profile, Trade, TradeAddress } from '../../lib/types'
@@ -26,6 +27,14 @@ function formatTradeDate(trade: Trade) {
 
 function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => [...part][0]).join('').toUpperCase()
+}
+
+function timelineStep(trade: Trade, hasOffer: boolean) {
+  if (trade.status === 'abgeschlossen') return 5 as const
+  if (trade.status === 'zur_bestaetigung' || trade.status === 'problem') return 4 as const
+  if (trade.status === 'vergeben') return 3 as const
+  if (hasOffer) return 1 as const
+  return 1 as const
 }
 
 export function HelperTradeDetail() {
@@ -110,8 +119,8 @@ function HelperTradeDetailContent({ tradeId, helperId, onAsk }: { tradeId: strin
     setReportingDone(false)
   }
 
-  if (loading) return <><AppBar back title="Trade" /><main className="screen helper-detail"><p className="text-body" role="status">Trade wird geladen …</p></main></>
-  if (!trade) return <><AppBar back title="Trade" /><main className="screen helper-detail"><p className="text-body" role="alert">{error}</p></main></>
+  if (loading) return <><AppBar back title="Auftrag" /><main className="screen helper-detail"><p className="text-body" role="status">Trade wird geladen …</p></main></>
+  if (!trade) return <><AppBar back title="Auftrag" /><main className="screen helper-detail"><p className="text-body" role="alert">{error}</p></main></>
 
   const clientName = client?.display_name ?? 'Auftraggebende Person'
   const canOffer = trade.status === 'offen' && !ownOffer && !success
@@ -120,7 +129,7 @@ function HelperTradeDetailContent({ tradeId, helperId, onAsk }: { tradeId: strin
 
   return (
     <>
-      <AppBar back title="Trade" />
+      <AppBar back title="Auftrag" />
       <main className="screen helper-detail">
         {error && <p className="helper-detail__error text-caption" role="alert">{error}</p>}
         {success && <p className="helper-detail__success text-label" role="status">Dein Angebot wurde gesendet.</p>}
@@ -128,6 +137,7 @@ function HelperTradeDetailContent({ tradeId, helperId, onAsk }: { tradeId: strin
         {offerSent && <div className="helper-detail__state helper-detail__state--accent"><strong className="text-label">Angebot gesendet</strong><span className="text-caption">CHF {currency.format(ownOffer?.price_chf ?? Number(price))}{(ownOffer?.proposed_at || proposedAt) ? ` · ${formatDate(ownOffer?.proposed_at ?? proposedAt)}` : ''}</span><ol className="helper-detail__timeline"><li className="helper-detail__timeline-item helper-detail__timeline-item--active"><strong>Person prüft dein Angebot</strong><span>Dein Vorschlag ist bei der auftraggebenden Person.</span></li><li className="helper-detail__timeline-item"><strong>Du wirst benachrichtigt</strong><span>Wir informieren dich, sobald es weitergeht.</span></li><li className="helper-detail__timeline-item"><strong>Bei Annahme siehst du Adresse und Termin</strong><span>Die Details werden nach der Zusage sichtbar.</span></li></ol><Link className="button button--secondary text-body-strong" to={`/chat/${trade.id}/${helperId}`}>Chatten</Link></div>}
         {trade.photo_urls[0] ? <img className="helper-detail__hero" src={trade.photo_urls[0]} alt="" /> : <div className="helper-detail__hero helper-detail__hero--empty"><ImageIcon size={32} /></div>}
         <h2 className="helper-detail__title">{trade.title}</h2>
+        <StatusTimeline step={timelineStep(trade, Boolean(ownOffer || success))} deadline={trade.status === 'zur_bestaetigung' && trade.completed_reported_at ? `Freigabe bis ${new Intl.DateTimeFormat('de-CH', { day: '2-digit', month: '2-digit' }).format(new Date(new Date(trade.completed_reported_at).getTime() + 10 * 86400000))} · sonst automatisch` : undefined} />
         <div className="helper-detail__facts">
           <p><Calendar size={20} aria-hidden /><span>{formatTradeDate(trade)}</span></p>
           <p><MapPin size={20} aria-hidden /><span>{trade.is_remote ? 'Überall · Remote' : trade.location ?? 'Ort offen'}</span></p>
@@ -141,8 +151,9 @@ function HelperTradeDetailContent({ tradeId, helperId, onAsk }: { tradeId: strin
           <span className="helper-detail__client-copy"><strong className="text-body-strong">{clientName}</strong><span className="text-caption text-secondary">Auftraggebende Person</span></span>
           <ChevronRight size={20} aria-hidden />
         </Link>
+        {(ownOffer || ['vergeben', 'zur_bestaetigung', 'abgeschlossen'].includes(trade.status)) && <Link className="button button--secondary text-body-strong" to={`/chat/${trade.id}/${helperId}`}>Chatten</Link>}
         {trade.status === 'vergeben' && <div className="helper-detail__state"><strong className="text-label">Auftrag erhalten</strong><span className="text-caption text-secondary">Wenn du fertig bist, kannst du den Abschluss melden.</span><Button onClick={() => void reportDone()} disabled={reportingDone}>{reportingDone ? 'Wird gemeldet …' : 'Als erledigt melden'}</Button></div>}
-        {trade.status === 'zur_bestaetigung' && <div className="helper-detail__state helper-detail__state--success"><strong className="text-label">Wartet auf Freigabe</strong><span className="text-caption">Die auftraggebende Person prüft den Abschluss. Die Auszahlung wird danach freigegeben.</span></div>}
+        {trade.status === 'zur_bestaetigung' && <div className="helper-detail__state helper-detail__state--success"><strong className="text-label">Wartet auf Freigabe</strong><span className="text-caption">Die auftraggebende Person prüft den Abschluss. {paymentMethod === 'bar' ? 'Die Zahlung erfolgt bar vor Ort.' : 'Die Auszahlung wird danach freigegeben.'}</span></div>}
         {trade.status === 'abgeschlossen' && <div className="helper-detail__state helper-detail__state--success"><strong className="text-label">Abgeschlossen</strong><span className="text-caption">{paymentMethod === 'bar' ? 'Bezahlt bar vor Ort' : payout !== null ? `Auszahlung · CHF ${payoutCurrency.format(payout)}` : 'Auszahlung wird angezeigt, sobald sie verfügbar ist.'}</span><Link className="button button--secondary text-body-strong" to={`/trades/${trade.id}/bewerten`}>Bewertung abgeben</Link></div>}
       </main>
       {canOffer && <div className="helper-detail__action-bar"><Button onClick={() => setSheetOpen(true)}>Angebot machen</Button><button className="text-label helper-detail__question" type="button" onClick={onAsk}>Frage stellen</button></div>}
