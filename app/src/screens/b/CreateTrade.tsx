@@ -22,7 +22,7 @@ const paymentOptions: { value: PaymentMethod; label: string }[] = [
 ]
 const suggestedTags = ['Werkzeug', 'Montage', 'Transport']
 
-type FieldName = 'title' | 'location' | 'when' | 'until' | 'street' | 'zip' | 'city' | 'payment' | 'budget' | 'photos'
+type FieldName = 'title' | 'when' | 'until' | 'street' | 'zip' | 'city' | 'payment' | 'budget' | 'photos'
 type Errors = Partial<Record<FieldName, string>>
 
 function Field({ id, label, error, children }: {
@@ -165,7 +165,6 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
 
     const data = new FormData(event.currentTarget)
     const title = String(data.get('title')).trim()
-    const location = remote ? '' : String(data.get('location')).trim()
     const description = String(data.get('description')).trim()
     const when = String(data.get('when') ?? '')
     const until = String(data.get('until') ?? '')
@@ -181,6 +180,7 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
     const street = String(data.get('street') ?? '').trim()
     const zip = String(data.get('zip') ?? '').trim()
     const city = String(data.get('city') ?? '').trim()
+    const location = remote ? '' : zip && city ? zip + ' ' + city : initialTrade?.location ?? ''
     const paymentMethods = data.getAll('payment')
     const tradeTags = tags.slice()
     const extraTag = tag.trim()
@@ -192,20 +192,23 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
     const invalid: Errors = {}
 
     if (!title) invalid.title = 'Kurz beschreiben, z. B. «Deckenlampe montieren»'
-    if (!remote && !location) invalid.location = 'Gib einen Ort oder ein Quartier ein oder wähle die Remote-Option.'
-    if (!/^\d{1,8}(\.\d{1,2})?$/.test(budget) || Number(budget) <= 0) {
-      invalid.budget = 'Gib einen Betrag über CHF 0 ein.'
-    }
-    if (!Number.isFinite(wantedFrom.getTime()) || (!sameStart && tooEarly)) {
+    if (!when) {
+      invalid.when = 'Wähle, wann die Hilfe stattfinden soll.'
+    } else if (!Number.isFinite(wantedFrom.getTime()) || (!sameStart && tooEarly)) {
       invalid.when = dateOnlyStart ? 'Wähle das heutige Datum oder ein späteres Datum.' : 'Wähle einen Zeitpunkt in der Zukunft.'
     }
-    if (wantedUntil && (!Number.isFinite(wantedUntil.getTime()) || wantedUntil <= wantedFrom)) {
-      invalid.until = 'Wähle einen Endzeitpunkt nach dem Beginn.'
+    if (span && !until) {
+      invalid.until = 'Wähle ein Enddatum.'
+    } else if (wantedUntil && (!Number.isFinite(wantedUntil.getTime()) || wantedUntil <= wantedFrom)) {
+      invalid.until = 'Wähle eine Endzeit nach dem Beginn.'
     }
-    const needsAddress = !remote && (!editing || Boolean(address) || Boolean(street || zip || city) || initialTrade?.is_remote)
+    const needsAddress = !remote && (!editing || Boolean(address) || Boolean(street || zip || city) || initialTrade?.is_remote || !location)
     if (needsAddress && !street) invalid.street = 'Gib Strasse und Hausnummer ein.'
     if (needsAddress && !zip) invalid.zip = 'Gib die PLZ ein.'
     if (needsAddress && !city) invalid.city = 'Gib den Ort ein.'
+    if (!/^\d{1,8}(\.\d{1,2})?$/.test(budget) || Number(budget) <= 0) {
+      invalid.budget = 'Gib einen Betrag über CHF 0 ein.'
+    }
     if (!paymentMethods.length) invalid.payment = 'Wähle mindestens eine Zahlungsart.'
     if (files.length + (initialTrade?.photo_urls.length ?? 0) > 5 || files.some((file) => !photoTypes.has(file.type) || file.size > 5 * 1024 * 1024)) {
       invalid.photos = 'Wähle bis zu 5 JPG-, PNG- oder WebP-Fotos mit je höchstens 5 MB.'
@@ -215,7 +218,10 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
     setMessage('')
     const firstError = Object.keys(invalid)[0]
     if (firstError) {
-      form.current?.querySelector<HTMLElement>('#' + firstError)?.focus()
+      const field = form.current?.querySelector<HTMLElement>('#' + firstError)
+      const details = field?.closest('details')
+      if (details) details.open = true
+      field?.focus()
       return
     }
 
@@ -232,11 +238,11 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
         try {
           coords = await geocodeLocality(location)
         } catch {
-          setErrors({ location: 'Die Ortssuche ist gerade nicht erreichbar. Versuche es erneut.' })
+          setErrors({ city: 'Die Ortssuche ist gerade nicht erreichbar. Versuche es erneut.' })
           return
         }
         if (!coords) {
-          setErrors({ location: 'Ort nicht gefunden. Versuche es mit PLZ und Ort.' })
+          setErrors({ city: 'Ort nicht gefunden. Versuche es mit PLZ und Ort.' })
           return
         }
       }
@@ -313,7 +319,7 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
 
   const availableSuggestions = suggestedTags.filter((value) => !tags.some((item) => item.toLowerCase() === value.toLowerCase()))
   const errorCount = Object.keys(errors).length
-  const titleAndLocation = errorCount === 2 && errors.title && errors.location
+  const addressRequired = !editing || Boolean(address) || initialTrade?.is_remote || !initialTrade?.location
 
   return (
     <main className="screen screen--with-action-bar">
@@ -324,10 +330,8 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
             <div className="create-trade__banner" role="alert">
               <CircleAlert aria-hidden />
               <div>
-                <p className="text-body-strong">{titleAndLocation ? '2 Angaben fehlen' : 'Prüfe deine Angaben'}</p>
-                <p className="text-body">{titleAndLocation
-                  ? 'Ergänze Titel und Ort, dann kannst du veröffentlichen.'
-                  : 'Die Hinweise bei den Feldern zeigen dir, was du ändern kannst.'}</p>
+                <p className="text-body-strong">Prüfe deine Angaben</p>
+                <p className="text-body">Die Hinweise bei den Feldern zeigen dir, was du ändern kannst.</p>
               </div>
             </div>
           )}
@@ -337,7 +341,7 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
             ))}
             <button type="button" className="text-label" aria-expanded={more} onClick={() => setMore(!more)}>{more ? 'Weniger' : 'Mehr …'}</button>
           </div>
-          <Field id="title" label="Was brauchst du?" error={errors.title}>
+          <Field id="title" label="Was brauchst du? *" error={errors.title}>
             <input {...fieldProps('title', errors)} required defaultValue={initialTrade?.title} placeholder="Z. B. Deckenlampe im Wohnzimmer montieren" />
           </Field>
           <div className="field">
@@ -355,7 +359,7 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
               <option value="from">Ab Zeitpunkt</option>
               <option value="span">Zeitspanne von–bis</option>
             </select>
-            <Field id="when" label="Von" error={errors.when}>
+            <Field id="when" label={span ? "Von *" : "Datum und Uhrzeit *"} error={errors.when}>
               <input key={span ? 'date' : 'datetime'} {...fieldProps('when', errors)} type={span ? 'date' : 'datetime-local'} value={span ? fromDate : startDateTime} onChange={(event) => {
                 if (span) setFromDate(event.target.value)
                 else setStartDateTime(event.target.value)
@@ -364,79 +368,84 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
                 <Clock aria-hidden /> {fromTime ? 'Von ' + fromTime + ' Uhr' : 'Startzeit hinzufügen (optional)'}
               </Button>}
             </Field>
-            {span && <Field id="until" label="Bis" error={errors.until}>
+            {span && <Field id="until" label="Bis *" error={errors.until}>
               <input {...fieldProps('until', errors)} type="date" value={untilDate} onChange={(event) => setUntilDate(event.target.value)} required />
               <Button type="button" variant="secondary" onClick={() => setTimeField('until')}>
                 <Clock aria-hidden /> {untilTime ? 'Bis ' + untilTime + ' Uhr' : 'Endzeit hinzufügen (optional)'}
               </Button>
             </Field>}
           </div>
-          <Field id="location" label="Ort oder Quartier für die Karte" error={remote ? undefined : errors.location}>
-            <input {...fieldProps('location', remote ? {} : errors)} disabled={remote} required={!remote} defaultValue={initialTrade?.location ?? undefined} placeholder="Zürich, Kreis 4" aria-describedby={errors.location && !remote ? 'location-error location-help' : 'location-help'} />
-            <div className="create-trade__location-options text-body" id="location-help">
+          <div className="field">
+            <div className="create-trade__location-options text-body">
               <label><input type="checkbox" checked={remote} onChange={(event) => {
                 setRemote(event.target.checked)
-                setErrors(({ location: _location, ...rest }) => rest)
+                setErrors(({ street: _street, zip: _zip, city: _city, ...rest }) => rest)
               }} /> Remote / von überall möglich</label>
               {!remote && <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap</a>}
             </div>
             <p className="text-body">Wähle Remote, wenn die helfende Person dafür nicht vor Ort sein muss.</p>
-            {!remote && <p className="text-body">Nur PLZ, Ort oder Quartier eingeben. Die Ortssuche fragt OpenStreetMap ab.</p>}
-          </Field>
+          </div>
           {!remote && <div className="field">
-            <p className="text-body">Die helfende Person sieht die Adresse erst nach der Zahlung. Bei Barzahlung sieht sie die Adresse nach der Vergabe.</p>
-            <Field id="street" label="Strasse und Hausnummer" error={errors.street}>
-              <input {...fieldProps('street', errors)} autoComplete="street-address" defaultValue={address?.street} />
+            <p className="text-body">PLZ und Ort erscheinen auf der Karte. Die Strasse sieht die helfende Person erst nach der Zahlung oder nach der Vergabe bei Barzahlung.</p>
+            {!addressRequired && <p className="text-body">Bisheriger Ort auf der Karte: {initialTrade?.location}. Du kannst eine genaue Adresse ergänzen.</p>}
+            <Field id="street" label={addressRequired ? "Strasse und Hausnummer *" : "Strasse und Hausnummer"} error={errors.street}>
+              <input {...fieldProps('street', errors)} autoComplete="street-address" required={addressRequired} defaultValue={address?.street} />
             </Field>
             <div className="create-trade__row">
-              <Field id="zip" label="PLZ" error={errors.zip}>
-                <input {...fieldProps('zip', errors)} autoComplete="postal-code" defaultValue={address?.zip} />
+              <Field id="zip" label={addressRequired ? "PLZ *" : "PLZ"} error={errors.zip}>
+                <input {...fieldProps('zip', errors)} autoComplete="postal-code" required={addressRequired} defaultValue={address?.zip} />
               </Field>
-              <Field id="city" label="Ort" error={errors.city}>
-                <input {...fieldProps('city', errors)} autoComplete="address-level2" defaultValue={address?.city} />
+              <Field id="city" label={addressRequired ? "Ort *" : "Ort"} error={errors.city}>
+                <input {...fieldProps('city', errors)} autoComplete="address-level2" required={addressRequired} defaultValue={address?.city} />
               </Field>
             </div>
           </div>}
-          <Field id="budget" label="Budget" error={errors.budget}>
+          <Field id="budget" label="Budget *" error={errors.budget}>
             <input {...fieldProps('budget', errors)} required inputMode="decimal" defaultValue={initialTrade?.budget_chf} placeholder="CHF" />
           </Field>
-          <fieldset className="create-trade__options">
-            <legend className="text-label">Akzeptierte Zahlungsarten</legend>
-            <div className="create-trade__chips">
-              {paymentOptions.map(({ value, label }, index) => (
-                <label className="text-body" key={value}>
-                  <input id={index === 0 ? 'payment' : undefined} type="checkbox" name="payment" value={value} defaultChecked={initialTrade?.payment_methods.includes(value) ?? true} /> {label}
-                </label>
-              ))}
-            </div>
-            {errors.payment && <p className="create-trade__error text-body">{errors.payment}</p>}
-          </fieldset>
-          <div className="field">
-            <label className="text-label" htmlFor="trade-tag">Stichwörter (optional)</label>
-            <div className="create-trade__row">
-              <input id="trade-tag" className="input text-body" value={tag} maxLength={40} placeholder="Z. B. IKEA" onChange={(event) => setTag(event.target.value)} onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault()
-                  addTag(tag)
-                }
-              }} />
-              <Button type="button" variant="secondary" disabled={!tag.trim()} onClick={() => addTag(tag)}>Hinzufügen</Button>
-            </div>
-            {tags.length > 0 && <>
-              <p className="text-label" id="selected-tags">Ausgewählt</p>
-              <div className="create-trade__chips create-trade__chips--selected" role="group" aria-labelledby="selected-tags">
-                {tags.map((value) => <button key={value} className="text-label" type="button" aria-label={value + ' entfernen'} onClick={() => setTags(tags.filter((item) => item !== value))}>{value} ×</button>)}
-              </div>
-            </>}
-            {availableSuggestions.length > 0 && <>
-              <p className="text-label" id="suggested-tags">Vorschläge</p>
-              <div className="create-trade__chips create-trade__chips--suggested" role="group" aria-labelledby="suggested-tags">
-                {availableSuggestions.map((value) => (
-                  <button className="text-label" key={value} type="button" onClick={() => addTag(value)}>+ {value}</button>
+          <details className="create-trade__details">
+            <summary>
+              <span className="text-body-strong">Weitere Angaben (optional)</span>
+              <Plus aria-hidden />
+            </summary>
+            <fieldset className="create-trade__options">
+              <legend className="text-label">Akzeptierte Zahlungsarten</legend>
+              <div className="create-trade__chips">
+                {paymentOptions.map(({ value, label }, index) => (
+                  <label className="text-body" key={value}>
+                    <input id={index === 0 ? 'payment' : undefined} type="checkbox" name="payment" value={value} defaultChecked={initialTrade?.payment_methods.includes(value) ?? true} /> {label}
+                  </label>
                 ))}
               </div>
-            </>}
-          </div>
+              {errors.payment && <p className="create-trade__error text-body">{errors.payment}</p>}
+            </fieldset>
+            <div className="field">
+              <label className="text-label" htmlFor="trade-tag">Stichwörter</label>
+              <div className="create-trade__row">
+                <input id="trade-tag" className="input text-body" value={tag} maxLength={40} placeholder="Z. B. IKEA" onChange={(event) => setTag(event.target.value)} onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault()
+                    addTag(tag)
+                  }
+                }} />
+                <Button type="button" variant="secondary" disabled={!tag.trim()} onClick={() => addTag(tag)}>Hinzufügen</Button>
+              </div>
+              {tags.length > 0 && <>
+                <p className="text-label" id="selected-tags">Ausgewählt</p>
+                <div className="create-trade__chips create-trade__chips--selected" role="group" aria-labelledby="selected-tags">
+                  {tags.map((value) => <button key={value} className="text-label" type="button" aria-label={value + ' entfernen'} onClick={() => setTags(tags.filter((item) => item !== value))}>{value} ×</button>)}
+                </div>
+              </>}
+              {availableSuggestions.length > 0 && <>
+                <p className="text-label" id="suggested-tags">Vorschläge</p>
+                <div className="create-trade__chips create-trade__chips--suggested" role="group" aria-labelledby="suggested-tags">
+                  {availableSuggestions.map((value) => (
+                    <button className="text-label" key={value} type="button" onClick={() => addTag(value)}>+ {value}</button>
+                  ))}
+                </div>
+              </>}
+            </div>
+          </details>
           <details className="create-trade__details">
             <summary>
               <Camera aria-hidden />
