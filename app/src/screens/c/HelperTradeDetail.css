@@ -19,6 +19,9 @@
 .helper-detail__timeline-item::before { content: ''; position: absolute; top: 0.3rem; left: 0; width: var(--size-icon-xs); height: var(--size-icon-xs); border-radius: var(--radius-avatar); background: var(--color-border-default); }
 .helper-detail__timeline-item--active { color: var(--color-text-default); }
 .helper-detail__timeline-item--active::before { background: var(--color-text-accent); }
+.helper-detail__state--declined { color: var(--color-text-accent); background: var(--color-surface-accent-subtle); }
+.helper-detail__state--address { color: var(--color-text-default); background: var(--color-surface-accent-subtle); }
+.helper-detail__map-link { display: inline-flex; align-items: center; gap: var(--space-inline-xs); width: fit-content; color: var(--color-text-accent); }
 .helper-detail__action-bar { position: fixed; right: 0; bottom: var(--size-bottom-nav-height); left: 50%; z-index: 2; display: flex; flex-direction: column; gap: var(--space-stack-xs); width: min(100%, var(--size-screen-width)); transform: translateX(-50%); padding: var(--space-inset-md) var(--space-inset-xl); border-top: var(--stroke-default) solid var(--color-border-subtle); background: var(--color-surface-default); }
 .helper-detail__question { min-height: var(--space-inset-xl); border: 0; color: var(--color-text-accent); background: transparent; cursor: pointer; }
 .helper-detail__scrim { position: fixed; inset: 0; z-index: 3; display: flex; align-items: flex-end; background: rgb(13 27 40 / 35%); }

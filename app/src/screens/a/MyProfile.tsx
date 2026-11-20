@@ -11,7 +11,8 @@ import { Toast } from '../../components/Toast'
 import { useAuth } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
 import type { Profile } from '../../lib/types'
-import { memberSince, paymentLabels, useProfile } from './profileData'
+import { memberSince, paymentLabels, useProfile, useRatings, type RatingRow } from './profileData'
+import { RatingEntry } from './RatingEntry'
 import './Profile.css'
 
 interface Task {
@@ -28,6 +29,7 @@ export function MyProfile() {
   const navigate = useNavigate()
   const location = useLocation()
   const { profile, stats, error } = useProfile(session?.user.id)
+  const ratings = useRatings(session?.user.id)
   const [toast, setToast] = useState<string | null>((location.state as { toast?: string } | null)?.toast ?? null)
   const [verifyOpen, setVerifyOpen] = useState(false)
 
@@ -93,19 +95,7 @@ export function MyProfile() {
             />
             <ProfileDetails profile={profile} />
 
-            <section className="profile__section">
-              <h2 className="text-h3">Bewertungen</h2>
-              {stats.rating_count === 0 ? (
-                <p className="text-caption text-secondary">Erscheinen nach deinem ersten abgeschlossenen Trade.</p>
-              ) : (
-                <>
-                  <RatingSummary avg={stats.rating_avg} count={stats.rating_count} />
-                  <Link to={`/profil/${profile.id}`} className="text-label text-accent">
-                    Alle Bewertungen ansehen
-                  </Link>
-                </>
-              )}
-            </section>
+            <ReceivedRatings ratings={ratings} avg={stats.rating_avg} />
 
             <Link to={`/profil/${profile.id}`} className="profile__link text-label text-accent">
               So sehen andere dein Profil
@@ -119,6 +109,35 @@ export function MyProfile() {
 
       <VerifySheet open={verifyOpen} onClose={() => setVerifyOpen(false)} />
     </>
+  )
+}
+
+/**
+ * A-3: the newest 3 received ratings right in the own profile. Ratings that are still hidden
+ * (the other person hasn't been rated back yet, see #13) are not returned by the database.
+ */
+function ReceivedRatings({ ratings, avg }: { ratings: RatingRow[]; avg: number }) {
+  return (
+    <section className="profile__section">
+      <h2 className="text-h3">Bewertungen</h2>
+      {ratings.length === 0 ? (
+        <p className="text-caption text-secondary">Erscheinen nach deinem ersten abgeschlossenen Trade.</p>
+      ) : (
+        <>
+          <RatingSummary avg={avg} count={ratings.length} />
+          <ul className="profile-rating-list">
+            {ratings.slice(0, 3).map((r) => (
+              <li key={r.id}>
+                <RatingEntry rating={r} />
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      <Link to="/profil/bewertungen" className="text-label text-accent">
+        {ratings.length > 3 ? `Alle ${ratings.length} Bewertungen ansehen` : 'Erhaltene und abgegebene Bewertungen'}
+      </Link>
+    </section>
   )
 }
 

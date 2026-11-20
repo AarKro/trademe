@@ -1,10 +1,12 @@
 import { ArrowLeft } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { NotificationBell } from './NotificationBell'
 import './AppBar.css'
 
 // Figma: App-Bar 150:56
 // Header rule (UX review): H1 only on tab roots (no back), pushed screens use the compact bar.
+// Tab roots also get the notification bell (A-2).
 // compact without back = form screens that offer «Abbrechen» as action instead (A/16).
 export function AppBar({
   title,
@@ -23,7 +25,10 @@ export function AppBar({
     return (
       <header className="app-bar app-bar--root">
         <h1 className="text-h1">{title}</h1>
-        {action}
+        <div className="app-bar__actions">
+          {action}
+          <NotificationBell />
+        </div>
       </header>
     )
   }

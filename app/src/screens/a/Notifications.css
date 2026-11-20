@@ -1,0 +1,57 @@
+/* A-2 · Notification list */
+.notifications__list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notification {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-stack-sm);
+  padding: var(--space-inset-md) 0;
+  border: 0;
+  border-bottom: var(--stroke-default) solid var(--color-border-subtle);
+  background: none;
+  color: var(--color-text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.notification__icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--size-avatar-md);
+  height: var(--size-avatar-md);
+  border-radius: var(--radius-avatar);
+  background: var(--color-surface-muted);
+  color: var(--color-icon-subtle);
+}
+
+.notification--unread .notification__icon {
+  background: var(--color-surface-accent-subtle);
+  color: var(--color-icon-accent);
+}
+
+.notification__icon svg {
+  width: var(--size-icon-md);
+  height: var(--size-icon-md);
+}
+
+.notification__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-inset-2xs);
+}
+
+.notification .unread-dot {
+  flex: none;
+  margin-top: var(--space-inset-sm);
+}

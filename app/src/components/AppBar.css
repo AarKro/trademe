@@ -33,6 +33,13 @@
   cursor: pointer;
 }
 
+/* tab roots: optional action + notification bell */
+.app-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-inline-sm);
+}
+
 /* text action on the right, e.g. «Bearbeiten» / «Abbrechen» – use with className "text-label" */
 .app-bar__action {
   flex-shrink: 0;

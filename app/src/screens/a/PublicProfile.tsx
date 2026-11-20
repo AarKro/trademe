@@ -11,13 +11,13 @@ import type { Profile } from '../../lib/types'
 import {
   firstName,
   memberSince,
-  monthYear,
   paymentLabels,
   useProfile,
   useRatings,
   type ProfileStats,
   type RatingRow,
 } from './profileData'
+import { RatingEntry } from './RatingEntry'
 import './Profile.css'
 
 // A/10 Profil – Helfende Person (447:5378) + A/10b «Geprüft» erklärt (453:4148).
@@ -171,21 +171,6 @@ function Ratings({ ratings }: { ratings: RatingRow[] }) {
           ))}
         </ul>
       </BottomSheet>
-    </>
-  )
-}
-
-function RatingEntry({ rating }: { rating: RatingRow }) {
-  return (
-    <>
-      <span className="profile-rating-card__author">
-        <span className="text-label">{rating.author?.display_name ?? 'Jemand'}</span>
-        <Rating value={rating.stars} />
-        <span className="text-caption text-secondary">
-          {[rating.trade?.title, monthYear(rating.created_at)].filter(Boolean).join(' · ')}
-        </span>
-      </span>
-      {rating.comment && <span className="text-body">{rating.comment}</span>}
     </>
   )
 }
