@@ -13,7 +13,7 @@ import { PublicProfile } from './screens/a/PublicProfile'
 import { RateTrade } from './screens/a/RateTrade'
 import { RatingsList } from './screens/a/RatingsList'
 import { Checkout } from './screens/b/Checkout'
-import { CreateTrade, EditTrade } from './screens/b/CreateTrade'
+import { CreateTrade, EditTrade, TradePublished } from './screens/b/CreateTrade'
 import { MyTrades } from './screens/b/MyTrades'
 import { TradeDetail } from './screens/b/TradeDetail'
 import { Discover } from './screens/c/Discover'
@@ -30,6 +30,7 @@ const built: Record<string, ReactNode> = {
   '/benachrichtigungen': <Notifications />,
   '/trades/:tradeId/bewerten': <RateTrade />,
   '/erstellen': <CreateTrade />,
+  '/erstellen/veroeffentlicht': <TradePublished />,
   '/trades': <MyTrades />,
   '/trades/:tradeId/checkout': <Checkout />,
   '/trades/:tradeId': <TradeDetail />,
