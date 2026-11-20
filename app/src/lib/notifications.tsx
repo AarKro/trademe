@@ -91,6 +91,14 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     if (seen.length) markRead(seen)
   }, [pathname, items, markRead])
 
+  // Number on the app icon of the installed app (iOS 16.4+, Android, desktop)
+  const unreadCount = items.filter((n) => !n.read_at).length
+  useEffect(() => {
+    const nav = navigator as Navigator & { setAppBadge?: (n?: number) => Promise<void>; clearAppBadge?: () => Promise<void> }
+    if (unreadCount > 0) nav.setAppBadge?.(unreadCount).catch(() => {})
+    else nav.clearAppBadge?.().catch(() => {})
+  }, [unreadCount])
+
   const value = useMemo(() => {
     const unreadItems = items.filter((n) => !n.read_at)
     return {

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { AppBar } from '../components/AppBar'
-import { supabase } from '../lib/supabase'
+import { signOut } from '../lib/push'
 import { screens } from './registry'
 
 // /dev – overview of all routes and their owners, handy while building.
@@ -24,7 +24,7 @@ export function DevIndex() {
               ))}
           </section>
         ))}
-        <button className="text-label text-accent" style={{ background: 'none', border: 0 }} onClick={() => supabase.auth.signOut()}>
+        <button className="text-label text-accent" style={{ background: 'none', border: 0 }} onClick={() => signOut()}>
           Abmelden
         </button>
       </main>
