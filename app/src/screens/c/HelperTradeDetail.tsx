@@ -8,7 +8,7 @@ import { supabase } from '../../lib/supabase'
 import type { Profile, Trade, TradeAddress } from '../../lib/types'
 import './HelperTradeDetail.css'
 
-const currency = new Intl.NumberFormat('de-CH', { maximumFractionDigits: 2 })
+const currency = new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const date = new Intl.DateTimeFormat('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit' })
 const time = new Intl.DateTimeFormat('de-CH', { hour: '2-digit', minute: '2-digit' })
 
@@ -40,6 +40,7 @@ function HelperTradeDetailContent({ tradeId, helperId }: { tradeId: string; help
   const [success, setSuccess] = useState(false)
   const [ownOffer, setOwnOffer] = useState<{ id: string; price_chf: number; proposed_at: string | null; status: 'offen' | 'angenommen' | 'abgelehnt' | 'zurueckgezogen' } | null>(null)
   const [payout, setPayout] = useState<number | null>(null)
+  const [paymentMethod, setPaymentMethod] = useState<'twint' | 'karte' | 'bar' | null>(null)
   const [reportingDone, setReportingDone] = useState(false)
   const [address, setAddress] = useState<TradeAddress | null>(null)
 
@@ -60,10 +61,8 @@ function HelperTradeDetailContent({ tradeId, helperId }: { tradeId: string; help
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.client_id).maybeSingle<Profile>()
       const { data: tradeAddress } = await supabase.from('trade_addresses').select('trade_id, street, zip, city').eq('trade_id', data.id).maybeSingle<TradeAddress>()
       if (active) setAddress(tradeAddress)
-      if (data.status === 'abgeschlossen') {
-        const { data: payment } = await supabase.from('payments').select('payout_chf').eq('trade_id', data.id).maybeSingle<{ payout_chf: number }>()
-        if (active) setPayout(payment?.payout_chf ?? null)
-      }
+      const { data: payment } = await supabase.from('payments').select('payout_chf, method').eq('trade_id', data.id).maybeSingle<{ payout_chf: number | null; method: 'twint' | 'karte' | 'bar' }>()
+      if (active) { setPayout(payment?.payout_chf ?? null); setPaymentMethod(payment?.method ?? null) }
       if (active) {
         setClient(profile)
         setLoading(false)
@@ -125,7 +124,7 @@ function HelperTradeDetailContent({ tradeId, helperId }: { tradeId: string; help
           <p><MapPin size={20} aria-hidden /><span>{trade.is_remote ? 'Überall · Remote' : trade.location ?? 'Ort offen'}</span></p>
           <p><Wallet size={20} aria-hidden /><span>Budget CHF {currency.format(trade.budget_chf)}</span></p>
         </div>
-        {!trade.is_remote && trade.status !== 'offen' && (address ? <div className="helper-detail__state helper-detail__state--address"><strong className="text-label">Adresse</strong><span className="text-body">{address.street}<br />{address.zip} {address.city}</span><a className="helper-detail__map-link text-label" href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(`${address.street}, ${address.zip} ${address.city}`)}`} target="_blank" rel="noreferrer"><ExternalLink size={16} aria-hidden /> In Karte öffnen</a></div> : <div className="helper-detail__state"><strong className="text-label">Adresse noch nicht verfügbar</strong><span className="text-caption text-secondary">Die genaue Adresse siehst du, sobald die Zahlung hinterlegt ist.</span></div>)}
+        {!trade.is_remote && trade.status !== 'offen' && (address ? <div className="helper-detail__state helper-detail__state--address"><strong className="text-label">Adresse</strong><span className="text-body">{address.street}<br />{address.zip} {address.city}</span><a className="helper-detail__map-link text-label" href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(`${address.street}, ${address.zip} ${address.city}`)}`} target="_blank" rel="noreferrer"><ExternalLink size={16} aria-hidden /> In Karte öffnen</a></div> : <div className="helper-detail__state"><strong className="text-label">Adresse noch nicht verfügbar</strong><span className="text-caption text-secondary">Die Adresse wurde noch nicht erfasst. Frag im Chat nach.</span></div>)}
         {trade.description && <p className="text-body text-secondary">{trade.description}</p>}
         <Link className="helper-detail__client" to={`/profil/${trade.client_id}`}>
           <span className="helper-detail__avatar text-label">{initials(clientName)}</span>
@@ -134,7 +133,7 @@ function HelperTradeDetailContent({ tradeId, helperId }: { tradeId: string; help
         </Link>
         {trade.status === 'vergeben' && <div className="helper-detail__state"><strong className="text-label">Auftrag erhalten</strong><span className="text-caption text-secondary">Wenn du fertig bist, kannst du den Abschluss melden.</span><Button onClick={() => void reportDone()} disabled={reportingDone}>{reportingDone ? 'Wird gemeldet …' : 'Als erledigt melden'}</Button></div>}
         {trade.status === 'zur_bestaetigung' && <div className="helper-detail__state helper-detail__state--success"><strong className="text-label">Wartet auf Freigabe</strong><span className="text-caption">Die auftraggebende Person prüft den Abschluss. Die Auszahlung wird danach freigegeben.</span></div>}
-        {trade.status === 'abgeschlossen' && <div className="helper-detail__state helper-detail__state--success"><strong className="text-label">Abgeschlossen</strong><span className="text-caption">Auszahlung{payout !== null ? ` · CHF ${currency.format(payout)}` : ' wird angezeigt, sobald sie verfügbar ist.'}</span></div>}
+        {trade.status === 'abgeschlossen' && <div className="helper-detail__state helper-detail__state--success"><strong className="text-label">Abgeschlossen</strong><span className="text-caption">{paymentMethod === 'bar' ? 'Bezahlt bar vor Ort' : payout !== null ? `Auszahlung · CHF ${currency.format(payout)}` : 'Auszahlung wird angezeigt, sobald sie verfügbar ist.'}</span></div>}
       </main>
       {canOffer && <div className="helper-detail__action-bar"><Button onClick={() => setSheetOpen(true)}>Angebot machen</Button><button className="text-label helper-detail__question" type="button">Frage stellen</button></div>}
       {sheetOpen && (
