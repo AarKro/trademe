@@ -1,5 +1,6 @@
 import { Camera, CircleAlert, Plus } from 'lucide-react'
 import { useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { ActionBar } from '../../components/ActionBar'
 import { AppBar } from '../../components/AppBar'
 import { Button } from '../../components/Button'
 import { useAuth } from '../../lib/auth'
@@ -8,6 +9,7 @@ import { geocodeLocality } from './geocode'
 import './CreateTrade.css'
 
 const categories = ['Möbelaufbau', 'Umzug', 'Garten', 'Haushalt', 'Technik', 'Sonstiges']
+const categoryLabels: Record<string, string> = { Garten: 'Gartenarbeit', Haushalt: 'Hilfe im Haushalt', Technik: 'Technikhilfe' }
 const photoTypes = new Map([['image/jpeg', 'jpg'], ['image/png', 'png'], ['image/webp', 'webp']])
 
 type FieldName = 'title' | 'location' | 'when' | 'budget' | 'photos'
@@ -23,7 +25,7 @@ function Field({ id, label, error, children }: {
     <div className="field">
       <label className="text-label" htmlFor={id}>{label}</label>
       {children}
-      {error && <p className="create-trade__error text-caption" id={id + '-error'}><CircleAlert aria-hidden />{error}</p>}
+      {error && <p className="create-trade__error text-body" id={id + '-error'}><CircleAlert aria-hidden />{error}</p>}
     </div>
   )
 }
@@ -64,8 +66,8 @@ export function CreateTrade() {
     const files = data.getAll('photos').filter((file): file is File => file instanceof File && file.size > 0)
     const invalid: Errors = {}
 
-    if (!title) invalid.title = 'Kurz beschreiben, z. B. «Schrank aufbauen»'
-    if (!remote && !location) invalid.location = 'Ort oder Quartier eingeben – oder «Überall» wählen'
+    if (!title) invalid.title = 'Kurz beschreiben, z. B. «Deckenlampe montieren»'
+    if (!remote && !location) invalid.location = 'Gib einen Ort oder ein Quartier ein oder wähle die Remote-Option.'
     if (!/^\d{1,8}(\.\d{1,2})?$/.test(budget) || Number(budget) <= 0) {
       invalid.budget = 'Gib einen Betrag über CHF 0 ein.'
     }
@@ -149,7 +151,7 @@ export function CreateTrade() {
   const titleAndLocation = errorCount === 2 && errors.title && errors.location
 
   return (
-    <>
+    <main className="screen screen--with-action-bar">
       <AppBar title="Trade erstellen" />
       <form ref={form} className="create-trade" onSubmit={publish} noValidate>
         <fieldset className="create-trade__fields" aria-label="Trade erstellen" disabled={busy || published}>
@@ -166,23 +168,24 @@ export function CreateTrade() {
           )}
           <div className="create-trade__chips" role="group" aria-label="Kategorie">
             {categories.slice(0, more ? categories.length : 3).map((option) => (
-              <button type="button" className="text-label" key={option} aria-pressed={category === option} onClick={() => setCategory(option)}>{option}</button>
+              <button type="button" className="text-label" key={option} aria-pressed={category === option} onClick={() => setCategory(option)}>{categoryLabels[option] ?? option}</button>
             ))}
             <button type="button" className="text-label" aria-expanded={more} onClick={() => setMore(!more)}>{more ? 'Weniger' : 'Mehr …'}</button>
           </div>
           <Field id="title" label="Was brauchst du?" error={errors.title}>
-            <input {...fieldProps('title', errors)} required placeholder="Kleiderschrank aufbauen" />
+            <input {...fieldProps('title', errors)} required placeholder="Z. B. Deckenlampe im Wohnzimmer montieren" />
           </Field>
           <Field id="location" label="Ort" error={remote ? undefined : errors.location}>
             <input {...fieldProps('location', remote ? {} : errors)} disabled={remote} required={!remote} placeholder="Zürich, Kreis 4" aria-describedby={errors.location && !remote ? 'location-error location-help' : 'location-help'} />
-            <div className="create-trade__location-options text-caption" id="location-help">
+            <div className="create-trade__location-options text-body" id="location-help">
               <label><input type="checkbox" checked={remote} onChange={(event) => {
                 setRemote(event.target.checked)
                 setErrors(({ location: _location, ...rest }) => rest)
-              }} /> Überall</label>
+              }} /> Remote / von überall möglich</label>
               {!remote && <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap</a>}
             </div>
-            {!remote && <p className="text-caption text-secondary">Nur PLZ, Ort oder Quartier eingeben. Die Ortssuche fragt OpenStreetMap ab.</p>}
+            <p className="text-body">Wähle Remote, wenn die helfende Person dafür nicht vor Ort sein muss.</p>
+            {!remote && <p className="text-body">Nur PLZ, Ort oder Quartier eingeben. Die Ortssuche fragt OpenStreetMap ab.</p>}
           </Field>
           <div className="create-trade__row">
             <Field id="when" label="Wann" error={errors.when}>
@@ -195,12 +198,12 @@ export function CreateTrade() {
           <details className="create-trade__details">
             <summary>
               <Camera aria-hidden />
-              <span><span className="text-body-strong">Fotos und Details</span><span className="text-caption text-secondary">Optional · mehr Angebote mit Foto</span></span>
+              <span><span className="text-body-strong">Fotos und Details</span><span className="text-body text-secondary">Optional: Beschreibung und bis zu 5 Fotos</span></span>
               <Plus aria-hidden />
             </summary>
             <label className="field text-label">
               Beschreibung
-              <textarea name="description" className="input text-body" rows={3} />
+              <textarea name="description" placeholder="Z. B. Bitte bring eine Leiter mit." className="input text-body" rows={3} />
             </label>
             <Field id="photos" label="Fotos" error={errors.photos}>
               <input {...fieldProps('photos', errors)} type="file" accept="image/jpeg,image/png,image/webp" multiple />
@@ -208,7 +211,7 @@ export function CreateTrade() {
           </details>
           {message && <p className="text-body" role={published ? 'status' : 'alert'}>{message}</p>}
         </fieldset>
-        <div className="create-trade__actions">
+        <ActionBar>
           {published
             ? <Button type="button" onClick={() => {
               form.current?.reset()
@@ -219,8 +222,8 @@ export function CreateTrade() {
               setPublished(false)
             }}>Weiteren Trade erstellen</Button>
             : <Button type="submit" disabled={busy}>{busy ? 'Wird veröffentlicht …' : 'Trade veröffentlichen'}</Button>}
-        </div>
+        </ActionBar>
       </form>
-    </>
+    </main>
   )
 }

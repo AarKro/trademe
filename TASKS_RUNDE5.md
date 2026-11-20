@@ -59,7 +59,7 @@ Priorität: **P1** = Lücke im Ablauf, **P2** = unklar/schlecht sichtbar, **P3**
 
 ### B · Auftraggebende (Trade erstellen, Meine Trades, Detail, Checkout)
 
-- [ ] **B-1 (P2) Trade erstellen klarer** 🟢
+- [x] **B-1 (P2) Trade erstellen klarer** 🟢
   - Button «Veröffentlichen» immer sichtbar: Sticky Action-Bar (Pattern 421:451, Komponente `ActionBar`), nicht unten im Formular versteckt.
   - Hinweistexte grösser: `text-body` statt `text-caption`, gut lesbarer Kontrast.
   - Beispieltexte konkret formulieren (Platzhalter wie «z.B. Deckenlampe im Wohnzimmer montieren»), Kategorien verständlich benennen. Ein Feld «Gruppe» darf es nicht geben bzw. es muss erklärt sein.
