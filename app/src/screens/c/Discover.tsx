@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
 import { Link } from 'react-router-dom'
-import { Globe, Navigation, RefreshCw, SlidersHorizontal, X } from 'lucide-react'
+import { Globe, Navigation, RefreshCw, SlidersHorizontal } from 'lucide-react'
 import { TradePhoto } from '../../components/TradePhoto'
 import { AppBar } from '../../components/AppBar'
 import { BottomSheet } from '../../components/BottomSheet'
 import { Button } from '../../components/Button'
+import { Segmented } from '../../components/Segmented'
 import { Zustand } from '../../components/Zustand'
 import { useAuth } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
@@ -24,6 +25,7 @@ L.Icon.Default.mergeOptions({ iconUrl: markerIcon, iconRetinaUrl: markerIcon2x, 
 
 const zurich: [number, number] = [47.3769, 8.5417]
 type Coordinates = { lat: number; lng: number }
+type DiscoverView = 'list' | 'map'
 function distanceKm(a: Coordinates, b: Coordinates) { const r = Math.PI / 180; const dLat = (b.lat - a.lat) * r; const dLng = (b.lng - a.lng) * r; const lat1 = a.lat * r; const lat2 = b.lat * r; const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2; return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h)) }
 
 function RecenterMap({ center }: { center: [number, number] }) {
@@ -85,6 +87,7 @@ export function Discover() {
   const [draftMin, setDraftMin] = useState('')
   const [draftMax, setDraftMax] = useState('')
   const [filterOpen, setFilterOpen] = useState(false)
+  const [view, setView] = useState<DiscoverView>('list')
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null)
   const [radius, setRadius] = useState(5)
   const [locationError, setLocationError] = useState<string | null>(null)
@@ -126,7 +129,22 @@ export function Discover() {
   })
   const center: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : zurich
   const filtered = remoteOnly || Boolean(priceMin || priceMax) || Boolean(userLocation)
-  const resetFilters = () => { setRemoteOnly(false); setPriceMin(''); setPriceMax(''); setUserLocation(null) }
+  const activeFilterCount = Number(remoteOnly) + Number(Boolean(priceMin || priceMax)) + Number(Boolean(userLocation))
+  const resetFilters = () => {
+    setRemoteOnly(false)
+    setPriceMin('')
+    setPriceMax('')
+    setDraftMin('')
+    setDraftMax('')
+    setUserLocation(null)
+    setLocationError(null)
+  }
+
+  function openFilters() {
+    setDraftMin(priceMin)
+    setDraftMax(priceMax)
+    setFilterOpen(true)
+  }
 
   function requestLocation() {
     if (!navigator.geolocation) { setLocationError('Dein Browser unterstützt keinen Standort.'); return }
@@ -137,18 +155,23 @@ export function Discover() {
     <>
       <AppBar title="Entdecken" />
       <main className="discover-screen">
-        <div className="discover-filters" aria-label="Filter">
-          <button className={`discover-chip ${userLocation && !remoteOnly ? 'discover-chip--active' : ''}`} onClick={() => { setRemoteOnly(false); if (!userLocation) requestLocation() }}>
-            <Navigation size={16} aria-hidden /> {userLocation ? `Mein Standort · ${radius} km` : 'In der Nähe'}
+        <div className="discover-toolbar">
+          <Segmented
+            label="Ansicht"
+            options={[{ value: 'list', label: 'Liste' }, { value: 'map', label: 'Karte' }]}
+            value={view}
+            onChange={setView}
+          />
+          <button
+            type="button"
+            className={`discover-filter-trigger ${filtered ? 'discover-filter-trigger--active' : ''}`}
+            onClick={openFilters}
+            aria-label={activeFilterCount ? `Filter, ${activeFilterCount} aktiv` : 'Filter'}
+          >
+            <SlidersHorizontal size={18} aria-hidden />
+            <span>Filter</span>
+            {activeFilterCount > 0 && <span className="discover-filter-trigger__count">{activeFilterCount}</span>}
           </button>
-          {userLocation && !remoteOnly && [2, 5, 10].filter((value) => value !== radius).map((value) => <button key={value} className="discover-chip" onClick={() => setRadius(value)}>{value} km</button>)}
-          <button className={`discover-chip ${remoteOnly ? 'discover-chip--active' : ''}`} onClick={() => setRemoteOnly(!remoteOnly)}>
-            <Globe size={16} aria-hidden /> Remote
-          </button>
-          <button className={`discover-chip ${priceMin || priceMax ? 'discover-chip--active' : ''}`} onClick={() => { setDraftMin(priceMin); setDraftMax(priceMax); setFilterOpen(true) }}>
-            <SlidersHorizontal size={16} aria-hidden /> {priceMin || priceMax ? `CHF ${priceMin || 0}–${priceMax || '…'}` : 'Preis'}
-          </button>
-          {filtered && <button className="discover-chip" onClick={resetFilters} aria-label="Alle Filter zurücksetzen"><X size={16} aria-hidden /> Zurücksetzen</button>}
         </div>
         {locationError && <p className="discover-error text-caption" role="alert">{locationError}</p>}
 
@@ -159,33 +182,61 @@ export function Discover() {
 
         {!loading && !error && visibleTrades.length > 0 && (
           <>
-            <section className="discover-map-wrap" aria-label="Karte mit offenen Aufträgen">
-              <MapContainer center={center} zoom={12} scrollWheelZoom={false} className="discover-map">
-                <RecenterMap center={center} />
-                <TileLayer attribution="&copy; OpenStreetMap" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                {userLocation && <Marker position={[userLocation.lat, userLocation.lng]}><Popup>Dein Standort</Popup></Marker>}
-                {mapTrades.map((trade) => (
-                  <Marker key={trade.id} position={[trade.lat!, trade.lng!]}>
-                    <Popup><Link to={`/auftraege/${trade.id}`}><strong>{trade.title}</strong><br />CHF {trade.budget_chf.toFixed(0)}</Link></Popup>
-                  </Marker>
-                ))}
-              </MapContainer>
-              {mapTrades.length === 0 && <p className="discover-map-note text-caption">Aufträge ohne Standort findest du unten in der Liste.</p>}
-            </section>
-            <section className="discover-list" aria-labelledby="discover-list-title">
-              <div className="discover-list__heading"><h2 id="discover-list-title" className="text-label">{visibleTrades.length} {visibleTrades.length === 1 ? 'Auftrag' : 'Aufträge'}</h2>{userLocation && <span className="text-caption text-secondary">Nach Distanz</span>}</div>
-              {localTrades.map((trade) => <TradeCard key={trade.id} trade={trade} />)}
-              {remoteTrades.length > 0 && <><h2 className="text-label discover-list__section-title">Remote</h2>{remoteTrades.map((trade) => <TradeCard key={trade.id} trade={trade} />)}</>}
-            </section>
+            {view === 'map' ? (
+              <section className="discover-map-wrap" aria-label="Karte mit offenen Aufträgen">
+                <MapContainer center={center} zoom={12} scrollWheelZoom={false} className="discover-map">
+                  <RecenterMap center={center} />
+                  <TileLayer attribution="&copy; OpenStreetMap" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                  {userLocation && <Marker position={[userLocation.lat, userLocation.lng]}><Popup>Dein Standort</Popup></Marker>}
+                  {mapTrades.map((trade) => (
+                    <Marker key={trade.id} position={[trade.lat!, trade.lng!]}>
+                      <Popup><Link to={`/auftraege/${trade.id}`}><strong>{trade.title}</strong><br />CHF {trade.budget_chf.toFixed(0)}</Link></Popup>
+                    </Marker>
+                  ))}
+                </MapContainer>
+                {mapTrades.length === 0 && (
+                  <p className="discover-map-note text-caption">
+                    Aufträge ohne Standort findest du in der Listenansicht.
+                    <button type="button" onClick={() => setView('list')}>Zur Liste</button>
+                  </p>
+                )}
+              </section>
+            ) : (
+              <section className="discover-list" aria-labelledby="discover-list-title">
+                <div className="discover-list__heading"><h2 id="discover-list-title" className="text-label">{visibleTrades.length} {visibleTrades.length === 1 ? 'Auftrag' : 'Aufträge'}</h2>{userLocation && <span className="text-caption text-secondary">Nach Distanz</span>}</div>
+                {localTrades.map((trade) => <TradeCard key={trade.id} trade={trade} />)}
+                {remoteTrades.length > 0 && <><h2 className="text-label discover-list__section-title">Remote</h2>{remoteTrades.map((trade) => <TradeCard key={trade.id} trade={trade} />)}</>}
+              </section>
+            )}
           </>
         )}
       </main>
-      <BottomSheet open={filterOpen} title="Preis" onClose={() => setFilterOpen(false)}>
-        <div className="discover-filter-fields">
-          <label className="field"><span className="text-label">Min. CHF</span><input className="input" type="number" min="0" inputMode="numeric" value={draftMin} onChange={(event) => setDraftMin(event.target.value)} placeholder="0" /></label>
-          <label className="field"><span className="text-label">Max. CHF</span><input className="input" type="number" min="0" inputMode="numeric" value={draftMax} onChange={(event) => setDraftMax(event.target.value)} placeholder="offen" /></label>
+      <BottomSheet open={filterOpen} title="Filter" onClose={() => setFilterOpen(false)}>
+        <section className="discover-filter-section" aria-labelledby="discover-location-filter">
+          <h3 id="discover-location-filter" className="text-label">Standort</h3>
+          <button type="button" className={`discover-filter-option ${userLocation ? 'discover-filter-option--active' : ''}`} onClick={() => { if (userLocation) setUserLocation(null); else requestLocation() }}>
+            <Navigation size={18} aria-hidden />
+            <span>{userLocation ? 'Mein Standort' : 'In der Nähe suchen'}<small>{userLocation ? `Radius ${radius} km · Tippen zum Deaktivieren` : 'Standort verwenden'}</small></span>
+          </button>
+          {userLocation && <div className="discover-radius" aria-label="Suchradius">
+            {[2, 5, 10].map((value) => <button key={value} type="button" className={value === radius ? 'discover-radius__option discover-radius__option--active' : 'discover-radius__option'} onClick={() => setRadius(value)}>{value} km</button>)}
+          </div>}
+        </section>
+        <label className="discover-filter-toggle">
+          <span><Globe size={18} aria-hidden /> Remote-Aufträge</span>
+          <input type="checkbox" checked={remoteOnly} onChange={(event) => setRemoteOnly(event.target.checked)} />
+        </label>
+        <section className="discover-filter-section" aria-labelledby="discover-price-filter">
+          <h3 id="discover-price-filter" className="text-label">Preis</h3>
+          <div className="discover-filter-fields">
+            <label className="field"><span className="text-label">Min. CHF</span><input className="input" type="number" min="0" inputMode="numeric" value={draftMin} onChange={(event) => setDraftMin(event.target.value)} placeholder="0" /></label>
+            <label className="field"><span className="text-label">Max. CHF</span><input className="input" type="number" min="0" inputMode="numeric" value={draftMax} onChange={(event) => setDraftMax(event.target.value)} placeholder="offen" /></label>
+          </div>
+        </section>
+        <div className="discover-filter-actions">
+          <Button onClick={() => { setPriceMin(draftMin); setPriceMax(draftMax); setFilterOpen(false) }}>Anwenden</Button>
+          {filtered && <Button variant="text" onClick={resetFilters}>Filter zurücksetzen</Button>}
         </div>
-        <Button onClick={() => { setPriceMin(draftMin); setPriceMax(draftMax); setFilterOpen(false) }}>Anwenden</Button>
       </BottomSheet>
     </>
   )
