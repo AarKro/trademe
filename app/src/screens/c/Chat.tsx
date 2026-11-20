@@ -35,11 +35,11 @@ export function Chat() {
       if (!tradeIds.length) { if (active) setLoading(false); return }
       const { data: trades } = await supabase.from('trades').select('id, title, client_id, helper_id, status').in('id', tradeIds)
       const tradeMap = new Map((trades ?? []).map((trade) => [trade.id, trade as Trade]))
-      const otherIds = [...new Set((trades ?? []).map((trade) => trade.client_id === userId ? trade.helper_id : trade.client_id).filter(Boolean))]
+      const otherIds = [...new Set((trades ?? []).map((trade) => { const message = latest.get(trade.id)!; return trade.client_id === userId ? message.helper_id : trade.client_id }).filter(Boolean))]
       const { data: profiles } = otherIds.length ? await supabase.from('profiles').select('id, display_name, avatar_url').in('id', otherIds) : { data: [] as Pick<Profile, 'id' | 'display_name' | 'avatar_url'>[] }
       const profileMap = new Map((profiles ?? []).map((profile) => [profile.id, profile]))
       if (active) {
-        setConversations(tradeIds.map((tradeId) => { const message = latest.get(tradeId)!; const trade = tradeMap.get(tradeId)!; const otherId = trade.client_id === userId ? trade.helper_id : trade.client_id; return { tradeId, helperId: message.helper_id, title: trade.title, preview: message.body, createdAt: message.created_at, status: trade.status, other: otherId ? profileMap.get(otherId) ?? null : null } }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()))
+        setConversations(tradeIds.map((tradeId) => { const message = latest.get(tradeId)!; const trade = tradeMap.get(tradeId)!; const otherId = trade.client_id === userId ? message.helper_id : trade.client_id; return { tradeId, helperId: message.helper_id, title: trade.title, preview: message.body, createdAt: message.created_at, status: trade.status, other: otherId ? profileMap.get(otherId) ?? null : null } }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()))
         setLoading(false)
       }
     }
@@ -63,6 +63,7 @@ export function ChatThread() {
   const [sending, setSending] = useState(false)
   useEffect(() => {
     if (!session || !tradeId || !helperId) return
+    const userId = session.user.id
     let active = true
     async function load() {
       const [{ data: tradeData }, { data: messageData }] = await Promise.all([
@@ -71,7 +72,7 @@ export function ChatThread() {
       ])
       if (!active) return
       setTrade(tradeData); setMessages((messageData as Message[] | null) ?? [])
-      if (tradeData) { const { data: profile } = await supabase.from('profiles').select('*').eq('id', tradeData.client_id).maybeSingle<Profile>(); if (active) setClient(profile) }
+      if (tradeData) { const otherId = tradeData.client_id === userId ? helperId : tradeData.client_id; const { data: profile } = await supabase.from('profiles').select('*').eq('id', otherId).maybeSingle<Profile>(); if (active) setClient(profile) }
       setLoading(false)
     }
     void load()
