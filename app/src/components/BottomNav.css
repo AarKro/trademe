@@ -28,3 +28,15 @@
   color: var(--color-text-accent);
   border-top-color: var(--color-action-primary);
 }
+
+/* A-2 · unread dot on the Chat tab */
+.bottom-nav__icon {
+  position: relative;
+  display: flex;
+}
+
+.bottom-nav__dot {
+  position: absolute;
+  top: 0;
+  right: calc(-1 * var(--space-inset-xs));
+}

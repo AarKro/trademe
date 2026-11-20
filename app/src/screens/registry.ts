@@ -143,6 +143,13 @@ export const screens: ScreenDef[] = [
     frames: [{ id: '447:5509', name: 'A/16 Eigenes Profil bearbeiten' }],
   },
   {
+    path: '/benachrichtigungen',
+    title: 'Benachrichtigungen',
+    owner: 'A',
+    frames: [],
+    note: 'Runde 5 · A-2. Kein Figma-Frame. Glocke in der App-Bar aller Tab-Roots, Punkt auf dem Chat-Tab. Daten: notifications (von Triggern erstellt), live via Realtime.',
+  },
+  {
     path: '/profil/:userId',
     title: 'Profil',
     owner: 'A',
