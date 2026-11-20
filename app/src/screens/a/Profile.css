@@ -350,3 +350,17 @@ button.chip {
 .profile-links__row .text-body-strong {
   flex: 1;
 }
+
+.profile-rating-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-inline-xs);
+}
+
+.profile-rating-edit {
+  display: grid;
+  gap: var(--space-stack-sm);
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
