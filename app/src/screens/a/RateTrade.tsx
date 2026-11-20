@@ -8,12 +8,12 @@ import { Rating } from '../../components/Rating'
 import { Zustand } from '../../components/Zustand'
 import { useAuth } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
-import type { Trade } from '../../lib/types'
+import type { PaymentMethod, Trade } from '../../lib/types'
 import './Profile.css'
 import './RateTrade.css'
 
 type Person = { id: string; display_name: string }
-type Payment = { amount_chf: number; payout_chf: number }
+type Payment = { amount_chf: number; payout_chf: number; method: PaymentMethod }
 type TradeRow = Pick<Trade, 'id' | 'title' | 'photo_urls' | 'scheduled_at' | 'client_id' | 'helper_id' | 'status'> & {
   client: Person | null
   helper: Person | null
@@ -52,7 +52,7 @@ export function RateTrade() {
         .select(
           'id, title, photo_urls, scheduled_at, client_id, helper_id, status, ' +
             'client:profiles!trades_client_id_fkey(id, display_name), helper:profiles!trades_helper_id_fkey(id, display_name), ' +
-            'payment:payments(amount_chf, payout_chf)',
+            'payment:payments(amount_chf, payout_chf, method)',
         )
         .eq('id', tradeId)
         .abortSignal(controller.signal)
@@ -135,7 +135,11 @@ function RatingForm({
     other.display_name,
     trade.scheduled_at && shortDate(trade.scheduled_at),
     payment &&
-      (iAmClient ? `${chf(Number(payment.amount_chf))} freigegeben` : `${chf(Number(payment.payout_chf))} ausgezahlt`),
+      (payment.method === 'bar'
+        ? `${chf(Number(payment.amount_chf))} bar bezahlt` // cash: TradeMe holds and pays out nothing
+        : iAmClient
+          ? `${chf(Number(payment.amount_chf))} freigegeben`
+          : `${chf(Number(payment.payout_chf))} ausgezahlt`),
   ]
     .filter(Boolean)
     .join(' · ')
