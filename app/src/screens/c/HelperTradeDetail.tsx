@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Calendar, ChevronRight, ExternalLink, Image as ImageIcon, MapPin, Wallet } from 'lucide-react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AppBar } from '../../components/AppBar'
 import { Button } from '../../components/Button'
 import { useAuth } from '../../lib/auth'
@@ -23,11 +23,12 @@ function initials(name: string) {
 export function HelperTradeDetail() {
   const { tradeId } = useParams()
   const { session } = useAuth()
+  const navigate = useNavigate()
   if (!tradeId || !session) return null
-  return <HelperTradeDetailContent key={`${tradeId}/${session.user.id}`} tradeId={tradeId} helperId={session.user.id} />
+  return <HelperTradeDetailContent key={`${tradeId}/${session.user.id}`} tradeId={tradeId} helperId={session.user.id} onAsk={() => navigate(`/chat/${tradeId}/${session.user.id}`)} />
 }
 
-function HelperTradeDetailContent({ tradeId, helperId }: { tradeId: string; helperId: string }) {
+function HelperTradeDetailContent({ tradeId, helperId, onAsk }: { tradeId: string; helperId: string; onAsk: () => void }) {
   const [trade, setTrade] = useState<Trade | null>(null)
   const [client, setClient] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -136,7 +137,7 @@ function HelperTradeDetailContent({ tradeId, helperId }: { tradeId: string; help
         {trade.status === 'zur_bestaetigung' && <div className="helper-detail__state helper-detail__state--success"><strong className="text-label">Wartet auf Freigabe</strong><span className="text-caption">Die auftraggebende Person prüft den Abschluss. Die Auszahlung wird danach freigegeben.</span></div>}
         {trade.status === 'abgeschlossen' && <div className="helper-detail__state helper-detail__state--success"><strong className="text-label">Abgeschlossen</strong><span className="text-caption">Auszahlung{payout !== null ? ` · CHF ${currency.format(payout)}` : ' wird angezeigt, sobald sie verfügbar ist.'}</span></div>}
       </main>
-      {canOffer && <div className="helper-detail__action-bar"><Button onClick={() => setSheetOpen(true)}>Angebot machen</Button><button className="text-label helper-detail__question" type="button">Frage stellen</button></div>}
+      {canOffer && <div className="helper-detail__action-bar"><Button onClick={() => setSheetOpen(true)}>Angebot machen</Button><button className="text-label helper-detail__question" type="button" onClick={onAsk}>Frage stellen</button></div>}
       {sheetOpen && (
         <div className="helper-detail__scrim" role="presentation" onClick={() => setSheetOpen(false)}>
           <section className="helper-detail__sheet" role="dialog" aria-modal="true" aria-labelledby="offer-title" onClick={(event) => event.stopPropagation()}>
