@@ -6,7 +6,7 @@ import './PushToggle.css'
 
 // A · push notifications: switch them on for this device.
 const texts: Record<PushState, { title: string; text: string }> = {
-  on: { title: 'Push ist aktiv', text: 'Du bekommst Angebote, Nachrichten und Fristen auch als Mitteilung auf dieses Gerät.' },
+  on: { title: 'Push ist aktiv', text: 'Du bekommst auch dann eine Mitteilung, wenn dein Angebot angenommen wird und die App geschlossen ist.' },
   off: { title: 'Mitteilungen aufs Handy', text: 'Erfahre sofort von neuen Angeboten und Nachrichten – auch wenn TradeMe geschlossen ist.' },
   'install-first': {
     title: 'Zuerst installieren',
