@@ -40,6 +40,8 @@ const icons: Record<NotificationKind, LucideIcon> = {
 export function Notifications() {
   const { items, loading, unread, markRead, markAllRead } = useNotifications()
   const navigate = useNavigate()
+  const accepted = items.filter((item) => item.kind === 'angebot_angenommen' && !item.read_at)
+  const history = items.filter((item) => item.kind !== 'angebot_angenommen' || item.read_at)
 
   const open = (n: Notification) => {
     markRead([n.id])
@@ -60,6 +62,24 @@ export function Notifications() {
         }
       />
       <main className="screen notifications">
+        {accepted.length > 0 && (
+          <section className="notifications__accepted" aria-labelledby="accepted-title">
+            <h2 className="text-h3" id="accepted-title">Neu angenommen</h2>
+            <ul className="notifications__list">
+              {accepted.map((n) => (
+                <li key={n.id}>
+                  <button className="notification notification--unread" onClick={() => open(n)}>
+                    <span className="notification__icon"><CircleCheck aria-hidden /></span>
+                    <span className="notification__text">
+                      <span className="text-body-strong">{n.body}</span>
+                      <span className="text-label text-accent">Auftrag ansehen</span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         <PushToggle />
         {!loading && items.length === 0 && (
           <Zustand
@@ -69,7 +89,7 @@ export function Notifications() {
           />
         )}
         <ul className="notifications__list">
-          {items.map((n) => {
+          {history.map((n) => {
             const Icon = icons[n.kind] ?? Clock
             const isUnread = !n.read_at
             return (

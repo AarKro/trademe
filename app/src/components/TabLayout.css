@@ -1,0 +1,14 @@
+.accepted-offer-notice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-inline-sm);
+  padding: var(--space-inset-sm) var(--space-inset-lg);
+  background: var(--color-surface-accent-subtle);
+  color: var(--color-text-accent);
+}
+
+.accepted-offer-notice svg {
+  flex: none;
+  width: var(--size-icon-sm);
+  height: var(--size-icon-sm);
+}
