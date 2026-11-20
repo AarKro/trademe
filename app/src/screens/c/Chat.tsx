@@ -1,4 +1,5 @@
 import { ChevronRight, ListChecks, Send, SmilePlus } from 'lucide-react'
+
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AppBar } from '../../components/AppBar'
@@ -169,6 +170,13 @@ export function Chat() {
 export function ChatThread() {
   const { tradeId, helperId } = useParams()
   const { session } = useAuth()
+  if (!tradeId || !helperId || !session) return null
+  return <ChatConversation key={threadKey(tradeId, helperId) + '/' + session.user.id}
+    tradeId={tradeId} helperId={helperId} me={session.user.id} />
+}
+
+function ChatConversation({ tradeId, helperId, me }: { tradeId: string; helperId: string; me: string }) {
+  const shell = useRef<HTMLDivElement>(null)
   const [trade, setTrade] = useState<Trade | null>(null)
   const [other, setOther] = useState<Profile | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -189,8 +197,6 @@ export function ChatThread() {
   }
 
   useEffect(() => {
-    if (!session || !tradeId || !helperId) return
-    const me = session.user.id
     let active = true
     async function load() {
       const [{ data: tradeData }, { data: messageData }] = await Promise.all([
@@ -199,7 +205,11 @@ export function ChatThread() {
       ])
       if (!active) return
       setTrade(tradeData)
-      setMessages((messageData as Message[] | null) ?? [])
+      setMessages((current) => {
+        const loaded = (messageData as Message[] | null) ?? []
+        const ids = new Set(loaded.map((message) => message.id))
+        return [...loaded, ...current.filter((message) => !ids.has(message.id))]
+      })
       if (tradeData) {
         const otherId = tradeData.client_id === me ? helperId : tradeData.client_id
         const { data: profile } = await supabase.from('profiles').select('*').eq('id', otherId).maybeSingle<Profile>()
@@ -222,7 +232,28 @@ export function ChatThread() {
       active = false
       void supabase.removeChannel(channel)
     }
-  }, [helperId, session, tradeId])
+  }, [helperId, me, tradeId])
+
+  useEffect(() => {
+    const viewport = window.visualViewport
+    const container = shell.current
+    if (!viewport || !container) return
+    function resize() {
+      if (!viewport || !container) return
+      const keyboardOpen = document.activeElement?.classList.contains('chat-composer__input')
+        && window.innerHeight - viewport.height > 120
+      container.toggleAttribute('data-keyboard-open', keyboardOpen)
+      container.style.setProperty('--chat-viewport-height', keyboardOpen ? viewport.height + 'px' : '100dvh')
+    }
+    viewport.addEventListener('resize', resize)
+    container.addEventListener('focusin', resize)
+    container.addEventListener('focusout', resize)
+    return () => {
+      viewport.removeEventListener('resize', resize)
+      container.removeEventListener('focusin', resize)
+      container.removeEventListener('focusout', resize)
+    }
+  }, [])
 
   const messageIds = messages.map((message) => message.id).join(',')
   useEffect(() => {
@@ -239,16 +270,15 @@ export function ChatThread() {
   }, [messageIds])
 
   async function reactTo(messageId: string, emoji: string) {
-    if (!session || pendingReaction.current) return
-    const userId = session.user.id
-    const current = reactions.find((item) => item.message_id === messageId && item.user_id === userId)
+    if (pendingReaction.current) return
+    const current = reactions.find((item) => item.message_id === messageId && item.user_id === me)
     const next = current?.emoji === emoji ? null : emoji
     pendingReaction.current = true
     setReactionError(false)
     try {
       const { error } = await supabase.rpc('set_message_reaction', { p_message_id: messageId, p_emoji: next })
       if (error) throw error
-      updateReaction({ message_id: messageId, user_id: userId, emoji: next })
+      updateReaction({ message_id: messageId, user_id: me, emoji: next })
       setReactionMenu(null)
     } catch {
       setReactionError(true)
@@ -259,13 +289,13 @@ export function ChatThread() {
 
   async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!session || !tradeId || !helperId || !body.trim() || sending) return
+    if (!body.trim() || sending) return
     setSending(true)
     const text = body.trim()
     setBody('')
     const { data, error } = await supabase
       .from('messages')
-      .insert({ trade_id: tradeId, helper_id: helperId, sender_id: session.user.id, body: text })
+      .insert({ trade_id: tradeId, helper_id: helperId, sender_id: me, body: text })
       .select(MESSAGE_FIELDS)
       .single()
     if (!error && data) setMessages((current) => (current.some((m) => m.id === data.id) ? current : [...current, data as Message]))
@@ -273,12 +303,12 @@ export function ChatThread() {
     setSending(false)
   }
 
-  const iAmClient = trade?.client_id === session?.user.id
+  const iAmClient = trade?.client_id === me
   // Context: which trade this chat is about – «Trade» for clients, «Auftrag» for helpers
   const contextLink = trade && (iAmClient ? `/trades/${trade.id}` : `/auftraege/${trade.id}`)
 
   return (
-    <>
+    <div ref={shell} className="chat-conversation">
       <AppBar back title={other?.display_name || 'Chat'} />
       {trade && contextLink && (
         <Link className="chat-thread__context" to={contextLink}>
@@ -308,7 +338,7 @@ export function ChatThread() {
               <span>{m.body}</span>
             </div>
           ) : (
-            <div className={`chat-thread__row ${m.sender_id === session?.user.id ? 'chat-thread__row--own' : ''}`} key={m.id}>
+            <div className={`chat-thread__row ${m.sender_id === me ? 'chat-thread__row--own' : ''}`} key={m.id}>
               <div className="chat-thread__bubble">
                 <p className="text-body">{m.body}</p>
                 <time className="text-caption">{time.format(new Date(m.created_at))}</time>
@@ -318,7 +348,7 @@ export function ChatThread() {
                     if (votes.length === 0) return null
                     return <button className="text-label" key={emoji} type="button"
                       aria-label={label + ', ' + votes.length + ' Reaktionen'}
-                      aria-pressed={votes.some((item) => item.user_id === session?.user.id)}
+                      aria-pressed={votes.some((item) => item.user_id === me)}
                       onClick={() => void reactTo(m.id, emoji)}>{emoji} {votes.length}</button>
                   })}
                   <button type="button" aria-label="Auf Nachricht reagieren" aria-expanded={reactionMenu === m.id}
@@ -347,6 +377,6 @@ export function ChatThread() {
           <Send aria-hidden />
         </button>
       </form>
-    </>
+    </div>
   )
 }
