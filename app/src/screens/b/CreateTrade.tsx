@@ -22,7 +22,7 @@ const paymentOptions: { value: PaymentMethod; label: string }[] = [
 ]
 const suggestedTags = ['Werkzeug', 'Montage', 'Transport']
 
-type FieldName = 'title' | 'when' | 'until' | 'street' | 'zip' | 'city' | 'payment' | 'budget' | 'photos'
+type FieldName = 'title' | 'when' | 'until' | 'start-time' | 'street' | 'zip' | 'city' | 'payment' | 'budget' | 'photos'
 type Errors = Partial<Record<FieldName, string>>
 
 function Field({ id, label, error, children }: {
@@ -103,9 +103,8 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
   const initialEnd = localDateTime(initialTrade?.wanted_until)
   const [fromDate, setFromDate] = useState(initialStart?.slice(0, 10) ?? '')
   const [untilDate, setUntilDate] = useState(initialEnd?.slice(0, 10) ?? '')
-  const [fromTime, setFromTime] = useState(initialStart?.slice(11) === '00:00' ? '' : initialStart?.slice(11) ?? '')
+  const [fromTime, setFromTime] = useState(initialEnd && initialStart?.slice(11) === '00:00' ? '' : initialStart?.slice(11) ?? '')
   const [untilTime, setUntilTime] = useState(initialEnd?.slice(11) === '23:59' ? '' : initialEnd?.slice(11) ?? '')
-  const [startDateTime, setStartDateTime] = useState(initialStart ?? '')
   const [timeField, setTimeField] = useState<'when' | 'until' | null>(null)
   const timeInput = useRef<HTMLInputElement>(null)
   const [tags, setTags] = useState<string[]>(initialTrade?.tags ?? [])
@@ -168,7 +167,7 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
     const description = String(data.get('description')).trim()
     const when = String(data.get('when') ?? '')
     const until = String(data.get('until') ?? '')
-    const startValue = span && when ? when + 'T' + (fromTime || '00:00') : when
+    const startValue = when ? when + 'T' + (fromTime || '00:00') : ''
     const endValue = until ? until + 'T' + (untilTime || '23:59:59.999') : ''
     const sameStart = Boolean(initialTrade && startValue === initialStart)
     const wantedFrom = new Date(sameStart ? initialTrade!.wanted_from : startValue)
@@ -194,6 +193,8 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
     if (!title) invalid.title = 'Kurz beschreiben, z. B. «Deckenlampe montieren»'
     if (!when) {
       invalid.when = 'Wähle, wann die Hilfe stattfinden soll.'
+    } else if (!span && !fromTime) {
+      invalid['start-time'] = 'Wähle eine Uhrzeit.'
     } else if (!Number.isFinite(wantedFrom.getTime()) || (!sameStart && tooEarly)) {
       invalid.when = dateOnlyStart ? 'Wähle das heutige Datum oder ein späteres Datum.' : 'Wähle einen Zeitpunkt in der Zukunft.'
     }
@@ -346,28 +347,19 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
           </Field>
           <div className="field">
             <label className="text-label" htmlFor="wanted-mode">Wann soll die Hilfe stattfinden?</label>
-            <select className="input text-body" id="wanted-mode" value={span ? 'span' : 'from'} onChange={(event) => {
-              const useSpan = event.target.value === 'span'
-              if (useSpan) {
-                setFromDate(startDateTime.slice(0, 10) || fromDate)
-                if (startDateTime) setFromTime(startDateTime.slice(11))
-              } else {
-                setStartDateTime(fromDate && fromTime ? fromDate + 'T' + fromTime : '')
-              }
-              setSpan(useSpan)
-            }}>
+            <select className="input text-body" id="wanted-mode" value={span ? 'span' : 'from'} onChange={(event) => setSpan(event.target.value === 'span')}>
               <option value="from">Ab Zeitpunkt</option>
               <option value="span">Zeitspanne von–bis</option>
             </select>
-            <Field id="when" label={span ? "Von *" : "Datum und Uhrzeit *"} error={errors.when}>
-              <input key={span ? 'date' : 'datetime'} {...fieldProps('when', errors)} type={span ? 'date' : 'datetime-local'} value={span ? fromDate : startDateTime} onChange={(event) => {
-                if (span) setFromDate(event.target.value)
-                else setStartDateTime(event.target.value)
-              }} required />
-              {span && <Button type="button" variant="secondary" onClick={() => setTimeField('when')}>
-                <Clock aria-hidden /> {fromTime ? 'Von ' + fromTime + ' Uhr' : 'Startzeit hinzufügen (optional)'}
-              </Button>}
+            <Field id="when" label={span ? "Von *" : "Datum *"} error={errors.when}>
+              <input {...fieldProps('when', errors)} type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} required />
             </Field>
+            <div className="field">
+              <Button id="start-time" type="button" variant="secondary" aria-describedby={errors['start-time'] ? 'start-time-error' : undefined} onClick={() => setTimeField('when')}>
+                <Clock aria-hidden /> {fromTime ? 'Von ' + fromTime + ' Uhr' : span ? 'Startzeit hinzufügen (optional)' : 'Uhrzeit wählen *'}
+              </Button>
+              {errors['start-time'] && <p className="create-trade__error text-body" id="start-time-error">{errors['start-time']}</p>}
+            </div>
             {span && <Field id="until" label="Bis *" error={errors.until}>
               <input {...fieldProps('until', errors)} type="date" value={untilDate} onChange={(event) => setUntilDate(event.target.value)} required />
               <Button type="button" variant="secondary" onClick={() => setTimeField('until')}>
@@ -470,7 +462,6 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
               setSpan(false)
               setFromDate('')
               setUntilDate('')
-              setStartDateTime('')
               setFromTime('')
               setUntilTime('')
               setTags([])
@@ -483,13 +474,13 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
             : <Button type="submit" disabled={busy}>{busy ? 'Wird gespeichert …' : addressPending ? 'Adresse erneut speichern' : editing ? 'Änderungen speichern' : 'Trade veröffentlichen'}</Button>}
         </ActionBar>
       </form>
-      <BottomSheet open={timeField !== null} title={timeField === 'when' ? 'Startzeit (optional)' : 'Endzeit (optional)'} onClose={() => setTimeField(null)}>
+      <BottomSheet open={timeField !== null} title={timeField === 'when' ? (span ? 'Startzeit (optional)' : 'Uhrzeit wählen') : 'Endzeit (optional)'} onClose={() => setTimeField(null)}>
         <label className="field text-label">
           Uhrzeit
           <input className="input text-body" type="time" ref={timeInput} defaultValue={timeField === 'when' ? fromTime : untilTime} />
         </label>
         <Button type="button" onClick={() => saveTime(timeInput.current?.value ?? '')}>Uhrzeit übernehmen</Button>
-        <Button type="button" variant="text" onClick={() => saveTime('')}>Ohne Uhrzeit</Button>
+        {span && <Button type="button" variant="text" onClick={() => saveTime('')}>Ohne Uhrzeit</Button>}
       </BottomSheet>
     </main>
   )
