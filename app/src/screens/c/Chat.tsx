@@ -1,5 +1,5 @@
-import { ChevronRight, ListChecks, Send } from 'lucide-react'
-import { useEffect, useState, type FormEvent } from 'react'
+import { ChevronRight, ListChecks, Send, SmilePlus } from 'lucide-react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AppBar } from '../../components/AppBar'
 import { Avatar } from '../../components/Avatar'
@@ -14,6 +14,14 @@ import './Chat.css'
 // C/04 Chat · list (tab root) and thread. One thread per trade + helper (messages.helper_id).
 
 type Message = { id: string; trade_id: string; helper_id: string; sender_id: string | null; body: string; created_at: string }
+type Reaction = { message_id: string; user_id: string; emoji: string | null }
+const quickReactions = [
+  { emoji: '👍', label: 'Daumen hoch' },
+  { emoji: '❤️', label: 'Herz' },
+  { emoji: '😊', label: 'Lächeln' },
+  { emoji: '🎉', label: 'Feiern' },
+]
+
 type Person = Pick<Profile, 'id' | 'display_name' | 'avatar_url'>
 type Conversation = {
   tradeId: string
@@ -164,9 +172,21 @@ export function ChatThread() {
   const [trade, setTrade] = useState<Trade | null>(null)
   const [other, setOther] = useState<Profile | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
+  const [reactions, setReactions] = useState<Reaction[]>([])
+  const [reactionMenu, setReactionMenu] = useState<string | null>(null)
+  const [reactionError, setReactionError] = useState(false)
+  const [reactionsAvailable, setReactionsAvailable] = useState(false)
+  const pendingReaction = useRef(false)
   const [body, setBody] = useState('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+
+  function updateReaction(reaction: Reaction) {
+    setReactions((current) => [
+      ...current.filter((item) => item.message_id !== reaction.message_id || item.user_id !== reaction.user_id),
+      reaction,
+    ])
+  }
 
   useEffect(() => {
     if (!session || !tradeId || !helperId) return
@@ -194,12 +214,48 @@ export function ChatThread() {
         const next = payload.new as Message
         if (next.helper_id === helperId) setMessages((current) => (current.some((m) => m.id === next.id) ? current : [...current, next]))
       })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'message_reactions' }, (payload) => {
+        if (payload.eventType !== 'DELETE') updateReaction(payload.new as Reaction)
+      })
       .subscribe()
     return () => {
       active = false
       void supabase.removeChannel(channel)
     }
   }, [helperId, session, tradeId])
+
+  const messageIds = messages.map((message) => message.id).join(',')
+  useEffect(() => {
+    if (!messageIds) return
+    const controller = new AbortController()
+    void supabase.from('message_reactions').select('message_id, user_id, emoji')
+      .in('message_id', messageIds.split(',')).abortSignal(controller.signal)
+      .then(({ data, error }) => {
+        if (controller.signal.aborted) return
+        setReactionsAvailable(!error)
+        if (data) setReactions(data as Reaction[])
+      })
+    return () => controller.abort()
+  }, [messageIds])
+
+  async function reactTo(messageId: string, emoji: string) {
+    if (!session || pendingReaction.current) return
+    const userId = session.user.id
+    const current = reactions.find((item) => item.message_id === messageId && item.user_id === userId)
+    const next = current?.emoji === emoji ? null : emoji
+    pendingReaction.current = true
+    setReactionError(false)
+    try {
+      const { error } = await supabase.rpc('set_message_reaction', { p_message_id: messageId, p_emoji: next })
+      if (error) throw error
+      updateReaction({ message_id: messageId, user_id: userId, emoji: next })
+      setReactionMenu(null)
+    } catch {
+      setReactionError(true)
+    } finally {
+      pendingReaction.current = false
+    }
+  }
 
   async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -244,6 +300,7 @@ export function ChatThread() {
             Noch keine Nachrichten. Schreib {other?.display_name?.split(/\s+/)[0] ?? 'der Person'} eine kurze Frage oder Absprache.
           </p>
         )}
+        {reactionError && <p className="text-body" role="alert">Die Reaktion konnte nicht gespeichert werden.</p>}
         {messages.map((m) =>
           m.sender_id === null ? (
             <div className="chat-thread__system text-label" key={m.id}>
@@ -255,6 +312,24 @@ export function ChatThread() {
               <div className="chat-thread__bubble">
                 <p className="text-body">{m.body}</p>
                 <time className="text-caption">{time.format(new Date(m.created_at))}</time>
+                {reactionsAvailable && <div className="chat-reactions">
+                  {quickReactions.map(({ emoji, label }) => {
+                    const votes = reactions.filter((item) => item.message_id === m.id && item.emoji === emoji)
+                    if (votes.length === 0) return null
+                    return <button className="text-label" key={emoji} type="button"
+                      aria-label={label + ', ' + votes.length + ' Reaktionen'}
+                      aria-pressed={votes.some((item) => item.user_id === session?.user.id)}
+                      onClick={() => void reactTo(m.id, emoji)}>{emoji} {votes.length}</button>
+                  })}
+                  <button type="button" aria-label="Auf Nachricht reagieren" aria-expanded={reactionMenu === m.id}
+                    onClick={() => setReactionMenu(reactionMenu === m.id ? null : m.id)}><SmilePlus aria-hidden /></button>
+                  {reactionMenu === m.id && <div className="chat-reactions__options" role="group" aria-label="Schnellreaktionen">
+                    {quickReactions.map(({ emoji, label }) => (
+                      <button key={emoji} type="button" aria-label={label}
+                        onClick={() => void reactTo(m.id, emoji)}>{emoji}</button>
+                    ))}
+                  </div>}
+                </div>}
               </div>
             </div>
           ),

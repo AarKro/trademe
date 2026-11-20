@@ -29,3 +29,35 @@
 .chat-thread__context strong { color: var(--color-text-primary); }
 .chat-thread__context svg, .chat-thread__system svg { flex: none; width: var(--size-icon-sm); height: var(--size-icon-sm); }
 .chat-composer__send svg { width: var(--size-icon-md); height: var(--size-icon-md); }
+
+.chat-reactions, .chat-reactions__options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-inline-xs);
+}
+
+.chat-reactions__options { flex-basis: 100%; }
+
+.chat-reactions button {
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--size-avatar-sm);
+  min-height: var(--size-avatar-sm);
+  padding-inline: var(--space-inset-xs);
+  border: var(--stroke-default) solid var(--color-border-control);
+  border-radius: var(--radius-badge);
+  background: var(--color-surface-default);
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.chat-reactions button[aria-pressed="true"] {
+  border-color: var(--color-action-primary);
+  background: var(--color-surface-accent-subtle);
+}
+
+.chat-reactions svg {
+  width: var(--size-icon-sm);
+  height: var(--size-icon-sm);
+}
