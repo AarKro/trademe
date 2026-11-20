@@ -8,7 +8,7 @@ import type { Profile, Trade } from '../../lib/types'
 import './Chat.css'
 
 type Message = { id: string; trade_id: string; helper_id: string; sender_id: string | null; body: string; created_at: string }
-type Conversation = { tradeId: string; helperId: string; title: string; preview: string; createdAt: string }
+type Conversation = { tradeId: string; helperId: string; title: string; preview: string; createdAt: string; status: Trade['status']; other: Pick<Profile, 'display_name' | 'avatar_url'> | null }
 const time = new Intl.DateTimeFormat('de-CH', { hour: '2-digit', minute: '2-digit' })
 
 export function Chat() {
@@ -20,20 +20,36 @@ export function Chat() {
     const userId = session.user.id
     let active = true
     async function load() {
-      const { data: messages } = await supabase.from('messages').select('id, trade_id, helper_id, sender_id, body, created_at').eq('helper_id', userId).order('created_at', { ascending: false })
-      const rows = (messages as Message[] | null) ?? []
+      const [{ data: helperMessages }, { data: clientTrades }] = await Promise.all([
+        supabase.from('messages').select('id, trade_id, helper_id, sender_id, body, created_at').eq('helper_id', userId).order('created_at', { ascending: false }),
+        supabase.from('trades').select('id, title, client_id, status').eq('client_id', userId),
+      ])
+      const ownTrades = (clientTrades ?? []) as Pick<Trade, 'id' | 'title' | 'client_id' | 'status'>[]
+      const ownTradeIds = ownTrades.map((trade) => trade.id)
+      const { data: clientMessages } = ownTradeIds.length
+        ? await supabase.from('messages').select('id, trade_id, helper_id, sender_id, body, created_at').in('trade_id', ownTradeIds).order('created_at', { ascending: false })
+        : { data: [] as Message[] }
       const latest = new Map<string, Message>()
-      rows.forEach((message) => { if (!latest.has(message.trade_id)) latest.set(message.trade_id, message) })
+      ;[...(helperMessages ?? []), ...(clientMessages ?? [])].forEach((message) => { if (!latest.has(message.trade_id)) latest.set(message.trade_id, message as Message) })
       const tradeIds = [...latest.keys()]
       if (!tradeIds.length) { if (active) setLoading(false); return }
-      const { data: trades } = await supabase.from('trades').select('id, title').in('id', tradeIds)
-      const titles = new Map((trades ?? []).map((trade) => [trade.id, trade.title]))
-      if (active) { setConversations(tradeIds.map((tradeId) => { const message = latest.get(tradeId)!; return { tradeId, helperId: message.helper_id, title: titles.get(tradeId) ?? 'Trade', preview: message.body, createdAt: message.created_at } })); setLoading(false) }
+      const { data: trades } = await supabase.from('trades').select('id, title, client_id, helper_id, status').in('id', tradeIds)
+      const tradeMap = new Map((trades ?? []).map((trade) => [trade.id, trade as Trade]))
+      const otherIds = [...new Set((trades ?? []).map((trade) => trade.client_id === userId ? trade.helper_id : trade.client_id).filter(Boolean))]
+      const { data: profiles } = otherIds.length ? await supabase.from('profiles').select('id, display_name, avatar_url').in('id', otherIds) : { data: [] as Pick<Profile, 'id' | 'display_name' | 'avatar_url'>[] }
+      const profileMap = new Map((profiles ?? []).map((profile) => [profile.id, profile]))
+      if (active) {
+        setConversations(tradeIds.map((tradeId) => { const message = latest.get(tradeId)!; const trade = tradeMap.get(tradeId)!; const otherId = trade.client_id === userId ? trade.helper_id : trade.client_id; return { tradeId, helperId: message.helper_id, title: trade.title, preview: message.body, createdAt: message.created_at, status: trade.status, other: otherId ? profileMap.get(otherId) ?? null : null } }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()))
+        setLoading(false)
+      }
     }
     void load()
     return () => { active = false }
   }, [session])
-  return <><AppBar title="Chat" /><main className="screen chat-list"><h2 className="text-h3">Deine Unterhaltungen</h2>{loading && <p className="text-body text-secondary">Chats werden geladen …</p>}{!loading && conversations.length === 0 && <p className="text-body text-secondary">Noch keine Unterhaltungen. Öffne einen Trade und schreibe der auftraggebenden Person.</p>}{conversations.map((conversation) => <Link className="chat-list__row" key={`${conversation.tradeId}/${conversation.helperId}`} to={`/chat/${conversation.tradeId}/${conversation.helperId}`}><span className="chat-list__icon"><ListChecks size={20} /></span><span className="chat-list__copy"><strong className="text-body-strong">{conversation.title}</strong><span className="text-caption text-secondary">{conversation.preview}</span></span><time className="text-caption text-secondary">{time.format(new Date(conversation.createdAt))}</time></Link>)}</main></>
+  const active = conversations.filter((conversation) => !['abgeschlossen', 'storniert'].includes(conversation.status))
+  const closed = conversations.filter((conversation) => ['abgeschlossen', 'storniert'].includes(conversation.status))
+  const row = (conversation: Conversation) => <Link className="chat-list__row" key={`${conversation.tradeId}/${conversation.helperId}`} to={`/chat/${conversation.tradeId}/${conversation.helperId}`}><span className="chat-list__avatar">{conversation.other?.avatar_url ? <img src={conversation.other.avatar_url} alt="" /> : <ListChecks size={20} />}</span><span className="chat-list__copy"><strong className="text-body-strong">{conversation.other?.display_name ?? 'Person'}</strong><span className="text-caption">{conversation.title}</span><span className="text-caption text-secondary">{conversation.preview}</span></span><time className="text-caption text-secondary">{time.format(new Date(conversation.createdAt))}</time></Link>
+  return <><AppBar title="Chat" /><main className="screen chat-list"><h2 className="text-h3">Deine Unterhaltungen</h2>{loading && <p className="text-body text-secondary">Chats werden geladen …</p>}{!loading && conversations.length === 0 && <p className="text-body text-secondary">Noch keine Unterhaltungen.</p>}{active.length > 0 && <section aria-labelledby="chat-active"><h3 id="chat-active" className="text-label">Aktiv</h3>{active.map(row)}</section>}{closed.length > 0 && <details className="chat-list__closed"><summary className="text-label">Abgeschlossen ({closed.length})</summary>{closed.map(row)}</details>}</main></>
 }
 
 export function ChatThread() {
