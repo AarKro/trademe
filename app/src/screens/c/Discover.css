@@ -15,7 +15,9 @@
 .discover-status, .discover-error { padding: var(--space-inset-lg); }
 .discover-error { display: flex; flex-direction: column; gap: var(--space-stack-xs); color: var(--color-text-accent); }
 .discover-error button { display: inline-flex; align-items: center; gap: var(--space-inline-xs); width: fit-content; padding: var(--space-inset-xs) 0; border: 0; color: inherit; background: none; cursor: pointer; }
-.discover-filter-fields { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-stack-sm); }
+.discover-filter-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-stack-sm); }
+.discover-filter-fields .field { min-width: 0; }
+.discover-filter-fields .input { width: 100%; min-width: 0; }
 .leaflet-control-attribution { font-size: var(--font-size-caption); }
 
 /* no photo → small icon instead of a big grey box (UX review #51) */
