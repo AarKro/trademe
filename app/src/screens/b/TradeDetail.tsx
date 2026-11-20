@@ -1,6 +1,7 @@
-import { Calendar, CircleCheck, Image as ImageIcon, Ellipsis, ShieldQuestion, Star } from 'lucide-react'
+import { Calendar, CircleCheck, Ellipsis, ShieldQuestion, Star } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { TradePhoto } from '../../components/TradePhoto'
 import { AppBar } from '../../components/AppBar'
 import { BottomSheet } from '../../components/BottomSheet'
 import { Button } from '../../components/Button'
@@ -123,9 +124,7 @@ function WaitingForOffers({ trade }: { trade: Trade }) {
     <>
       <p className="trade-detail__online text-label"><CircleCheck aria-hidden />Dein Trade ist online</p>
       <div className="trade-detail__summary">
-        {trade.photo_urls[0]
-          ? <img className="trade-detail__thumbnail" src={trade.photo_urls[0]} alt="" />
-          : <span className="trade-detail__thumbnail"><ImageIcon aria-hidden /></span>}
+        <TradePhoto className="trade-detail__thumbnail" src={trade.photo_urls[0]} />
         <div>
           <h2 className="text-h3">{trade.title}</h2>
           <p className="text-caption text-secondary">{details}</p>

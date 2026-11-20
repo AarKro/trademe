@@ -1,6 +1,7 @@
-import { Calendar, CircleAlert, CircleCheck, Image as ImageIcon, MapPin, ShieldQuestion, Star, Wallet, X } from 'lucide-react'
+import { Calendar, CircleAlert, CircleCheck, MapPin, ShieldQuestion, Star, Wallet, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { TradePhoto } from '../../components/TradePhoto'
 import { AppBar } from '../../components/AppBar'
 import { BottomSheet } from '../../components/BottomSheet'
 import { Button } from '../../components/Button'
@@ -167,9 +168,7 @@ function CheckoutContent({ tradeId, offerId, userId }: { tradeId: string; offerI
               <CircleCheck aria-hidden /> Vereinbarung bestätigt · Barzahlung vor Ort
             </p>}
             {!failed && <div className="checkout__summary">
-              {agreement.trade.photo_urls[0]
-                ? <img className="checkout__photo" src={agreement.trade.photo_urls[0]} alt="" />
-                : <span className="checkout__photo"><ImageIcon aria-hidden /></span>}
+              <TradePhoto className="checkout__photo" src={agreement.trade.photo_urls[0]} />
               <h2 className="text-h3">{agreement.trade.title}</h2>
             </div>}
             <TradeProgress active={confirmed ? 2 : 1} hint={confirmed ? 'Bezahle vor Ort direkt bei der helfenden Person.' : 'Wähle, wie du bezahlst. Danach ist der Termin fix.'} />
