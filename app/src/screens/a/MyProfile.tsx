@@ -207,6 +207,7 @@ export function ProfileDetails({ profile }: { profile: Profile }) {
       <section className="profile__section">
         <h2 className="text-h3">Akzeptierte Zahlungsarten</h2>
         <p className="text-body">{profile.accepted_payment_methods.map((m) => paymentLabels[m]).join(' · ') || '–'}</p>
+        <p className="text-caption text-secondary">Diese Auswahl wird beim Erstellen vorausgewählt und kann pro Trade geändert werden.</p>
       </section>
     </>
   )

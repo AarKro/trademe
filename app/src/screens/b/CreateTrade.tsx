@@ -95,6 +95,7 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
   const navigate = useNavigate()
   const editing = Boolean(initialTrade)
   const { session } = useAuth()
+  const [selectedMethods, setSelectedMethods] = useState<PaymentMethod[] | null>(initialTrade?.payment_methods ?? null)
   const [category, setCategory] = useState(initialTrade?.category ?? categories[0])
   const [more, setMore] = useState(Boolean(initialTrade?.category && !categories.slice(0, 3).includes(initialTrade.category)))
   const [remote, setRemote] = useState(initialTrade?.is_remote ?? false)
@@ -117,6 +118,22 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
   const [busy, setBusy] = useState(false)
   const submitting = useRef(false)
   const form = useRef<HTMLFormElement>(null)
+
+  useEffect(() => {
+    if (initialTrade || !session) return
+    const controller = new AbortController()
+    supabase
+      .from('profiles')
+      .select('accepted_payment_methods')
+      .eq('id', session.user.id)
+      .abortSignal(controller.signal)
+      .maybeSingle<{ accepted_payment_methods: PaymentMethod[] }>()
+      .then(({ data, error }) => {
+        if (controller.signal.aborted) return
+        setSelectedMethods(error || !data ? paymentOptions.map(({ value }) => value) : data.accepted_payment_methods)
+      })
+    return () => controller.abort()
+  }, [initialTrade, session])
 
   function addTag(value: string) {
     const clean = value.trim()
@@ -400,12 +417,22 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
               <span className="text-body-strong">Weitere Angaben (optional)</span>
               <Plus aria-hidden />
             </summary>
-            <fieldset className="create-trade__options">
+            <fieldset className="create-trade__options" disabled={selectedMethods === null}>
               <legend className="text-label">Akzeptierte Zahlungsarten</legend>
+              <p className="text-caption text-secondary">Vorauswahl aus deinem Profil. Für diesen Trade kannst du sie anpassen.</p>
               <div className="create-trade__chips">
                 {paymentOptions.map(({ value, label }, index) => (
                   <label className="text-body" key={value}>
-                    <input id={index === 0 ? 'payment' : undefined} type="checkbox" name="payment" value={value} defaultChecked={initialTrade?.payment_methods.includes(value) ?? true} /> {label}
+                    <input
+                      id={index === 0 ? 'payment' : undefined}
+                      type="checkbox"
+                      name="payment"
+                      value={value}
+                      checked={selectedMethods?.includes(value) ?? false}
+                      onChange={(event) => setSelectedMethods((current) => event.target.checked
+                        ? [...(current ?? []), value]
+                        : (current ?? []).filter((method) => method !== value))}
+                    /> {label}
                   </label>
                 ))}
               </div>
@@ -471,7 +498,7 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
               setMessage('')
               setPublished(false)
             }}>Weiteren Trade erstellen</Button>
-            : <Button type="submit" disabled={busy}>{busy ? 'Wird gespeichert …' : addressPending ? 'Adresse erneut speichern' : editing ? 'Änderungen speichern' : 'Trade veröffentlichen'}</Button>}
+            : <Button type="submit" disabled={busy || selectedMethods === null}>{busy ? 'Wird gespeichert …' : selectedMethods === null ? 'Zahlungsarten werden geladen …' : addressPending ? 'Adresse erneut speichern' : editing ? 'Änderungen speichern' : 'Trade veröffentlichen'}</Button>}
         </ActionBar>
       </form>
       <BottomSheet open={timeField !== null} title={timeField === 'when' ? (span ? 'Startzeit (optional)' : 'Uhrzeit wählen') : 'Endzeit (optional)'} onClose={() => setTimeField(null)}>
