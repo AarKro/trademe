@@ -70,7 +70,7 @@ Priorität: **P1** = Lücke im Ablauf, **P2** = unklar/schlecht sichtbar, **P3**
   - Tags (Chips, frei + Vorschläge) und akzeptierte Zahlungsarten erfassen.
 - [ ] **B-3 (P1) Eigene Trades bearbeiten und löschen** 🟢 bearbeiten / 🔒 löschen
   Im Trade-Detail (Status `offen`): Menü in der App-Bar → «Bearbeiten» (gleiches Formular wie Erstellen, vorausgefüllt, `update` auf `trades`) und «Löschen» (Bestätigungs-Sheet → `rpc('delete_trade')`). Nach `vergeben` gibt es nur «Stornieren» (gibt es schon).
-- [ ] **B-4 (P1) «Meine Trades» / «Meine Angebote»** 🟢
+- [x] **B-4 (P1) «Meine Trades» / «Meine Angebote»** 🟢
   Umschalter oben in `/trades`. «Meine Trades» = Trades, die ich erstellt habe. «Meine Angebote» = Angebote, die ich gesendet habe, mit Status (offen / angenommen / abgelehnt) → Tipp öffnet `/auftraege/:id`. Die Gruppierung «Handlung nötig» bleibt pro Tab.
 - [ ] **B-5 (P2) Klare Buttons bei Angeboten** 🟢 Annehmen/Chatten · 🔒 Ablehnen
   Jede Angebotskarte in B/03b hat drei Aktionen: **Annehmen** (primär), **Chatten**, **Ablehnen** (Bestätigung → `rpc('decline_offer')`). Abgelehnte Angebote verschwinden aus der Liste.
