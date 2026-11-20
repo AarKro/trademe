@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
 import { Link } from 'react-router-dom'
-import { MapPin, Navigation, RefreshCw } from 'lucide-react'
+import { MapPin, Navigation, RefreshCw, SlidersHorizontal, X } from 'lucide-react'
 import { AppBar } from '../../components/AppBar'
 import { supabase } from '../../lib/supabase'
 import type { Trade } from '../../lib/types'
@@ -56,6 +56,11 @@ function EmptyState() {
 export function Discover() {
   const [trades, setTrades] = useState<Trade[]>([])
   const [remoteOnly, setRemoteOnly] = useState(false)
+  const [priceMin, setPriceMin] = useState('')
+  const [priceMax, setPriceMax] = useState('')
+  const [draftMin, setDraftMin] = useState('')
+  const [draftMax, setDraftMax] = useState('')
+  const [filterOpen, setFilterOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -76,8 +81,8 @@ export function Discover() {
   useEffect(() => { void loadTrades() }, [])
 
   const visibleTrades = useMemo(
-    () => remoteOnly ? trades.filter((trade) => trade.is_remote) : trades,
-    [remoteOnly, trades],
+    () => trades.filter((trade) => (!remoteOnly || trade.is_remote) && (!priceMin || trade.budget_chf >= Number(priceMin)) && (!priceMax || trade.budget_chf <= Number(priceMax))),
+    [priceMax, priceMin, remoteOnly, trades],
   )
   const mapTrades = visibleTrades.filter((trade) => trade.lat !== null && trade.lng !== null)
 
@@ -92,6 +97,10 @@ export function Discover() {
           <button className={`discover-chip ${remoteOnly ? 'discover-chip--active' : ''}`} onClick={() => setRemoteOnly(true)}>
             <Navigation size={16} aria-hidden /> Überall
           </button>
+          <button className={`discover-chip ${priceMin || priceMax ? 'discover-chip--active' : ''}`} onClick={() => { setDraftMin(priceMin); setDraftMax(priceMax); setFilterOpen(true) }}>
+            <SlidersHorizontal size={16} aria-hidden /> Preis
+          </button>
+          {(priceMin || priceMax) && <button className="discover-chip" onClick={() => { setPriceMin(''); setPriceMax('') }}><X size={16} aria-hidden /> Preis zurücksetzen</button>}
         </div>
 
         {loading && <p className="text-body text-secondary discover-status">Trades werden geladen …</p>}
@@ -120,6 +129,7 @@ export function Discover() {
           </>
         )}
       </main>
+      {filterOpen && <div className="discover-filter-scrim" role="presentation" onClick={() => setFilterOpen(false)}><section className="discover-filter-sheet" role="dialog" aria-modal="true" aria-labelledby="filter-title" onClick={(event) => event.stopPropagation()}><div className="discover-filter-handle" /><h2 id="filter-title" className="text-h3">Filter</h2><p className="text-caption text-secondary">Preisbereich und Remote-Aufträge</p><div className="discover-filter-fields"><label className="field"><span className="text-label">Min. CHF</span><input className="input" type="number" min="0" value={draftMin} onChange={(event) => setDraftMin(event.target.value)} placeholder="0" /></label><label className="field"><span className="text-label">Max. CHF</span><input className="input" type="number" min="0" value={draftMax} onChange={(event) => setDraftMax(event.target.value)} placeholder="offen" /></label></div><label className="discover-filter-toggle"><input type="checkbox" checked={remoteOnly} onChange={(event) => setRemoteOnly(event.target.checked)} /><span className="text-label">Nur Remote-Aufträge</span></label><button className="button button--primary text-body-strong" onClick={() => { setPriceMin(draftMin); setPriceMax(draftMax); setFilterOpen(false) }}>Filter anwenden</button></section></div>}
     </>
   )
 }
