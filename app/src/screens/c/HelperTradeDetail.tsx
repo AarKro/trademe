@@ -1,6 +1,7 @@
 import { Calendar, ChevronRight, ExternalLink, MapPin, Tag, Wallet } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { TradePhoto } from '../../components/TradePhoto'
 import { ActionBar } from '../../components/ActionBar'
 import { AppBar } from '../../components/AppBar'
 import { Avatar } from '../../components/Avatar'
@@ -224,7 +225,7 @@ function HelperTradeDetailContent({ tradeId, helperId }: { tradeId: string; help
           </p>
         )}
 
-        {trade.photo_urls[0] && <img className="helper-detail__hero" src={trade.photo_urls[0]} alt="" />}
+        <TradePhoto className="helper-detail__hero" src={trade.photo_urls[0]} />
         <h2 className="text-h2">{trade.title}</h2>
 
         {offerEnded && (
