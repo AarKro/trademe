@@ -87,7 +87,8 @@ function OfferCard({ offer, rating, tradeId, onDecline }: {
         {offer.message && <p className="text-body text-secondary trade-detail__message">{offer.message}</p>}
         <div className="trade-detail__actions">
           <Button onClick={() => navigate(checkout)}>Annehmen</Button>
-          <Button variant="secondary" onClick={() => navigate(chat)}>Chatten</Button>
+          {/* 1 primary per card; chat and decline as quiet text actions (UX review #52) */}
+          <Button variant="text" onClick={() => navigate(chat)}>Chatten</Button>
           <Button variant="text" onClick={onDecline}>Ablehnen</Button>
         </div>
       </div>
@@ -230,7 +231,7 @@ function TradeDetailContent({ tradeId, userId }: { tradeId: string; userId: stri
         )}
         {detail && detail.offers.length > 0 && (
           <section className="trade-detail__offers" aria-label="Angebote">
-            <p className="text-caption text-secondary">{detail.trade.title} · Budget CHF {currency.format(detail.trade.budget_chf)}</p>
+            <TradeProgress active={0} hint={`${detail.offers.length} ${detail.offers.length === 1 ? 'Angebot' : 'Angebote'} · Budget CHF ${currency.format(detail.trade.budget_chf)}`} />
             {detail.offers.map((offer) => (
               <OfferCard key={offer.id} offer={offer} rating={detail.ratings.find(({ id }) => id === offer.helper_id)}
                 tradeId={detail.trade.id} onDecline={() => { setDeclineError(false); setDeclineId(offer.id) }} />

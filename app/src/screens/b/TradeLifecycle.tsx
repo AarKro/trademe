@@ -7,12 +7,13 @@ import { StatusBadge } from '../../components/StatusBadge'
 import { supabase } from '../../lib/supabase'
 import type { PaymentMethod, Profile, Trade } from '../../lib/types'
 import { TradeProgress } from './TradeProgress'
+import { Zustand } from '../../components/Zustand'
 import './Checkout.css'
 import './TradeLifecycle.css'
 
 type Payment = { method: PaymentMethod; amount_chf: number; status: string }
 type Helper = Pick<Profile, 'display_name' | 'avatar_url' | 'is_verified'>
-type Agreement = { helper: Helper | null; payment: Payment | null; rated: boolean }
+type Agreement = { helper: Helper | null; payment: Payment | null; rated: boolean; address: { street: string; zip: string; city: string } | null }
 
 const labels: Record<PaymentMethod, string> = { bar: 'Barzahlung vor Ort', twint: 'TWINT', karte: 'Kreditkarte' }
 const reasons = ['Nicht vollständig erledigt', 'Schaden entstanden', 'Helfende Person nicht erschienen']
@@ -32,17 +33,18 @@ function reportDeadline(timestamp: number) {
 }
 
 async function loadAgreement(trade: Trade, signal: AbortSignal): Promise<Agreement> {
-  const [helper, payment, rating] = await Promise.all([
+  const [helper, payment, address, rating] = await Promise.all([
     trade.helper_id
       ? supabase.from('profiles').select('display_name, avatar_url, is_verified').eq('id', trade.helper_id).abortSignal(signal).maybeSingle<Helper>()
       : Promise.resolve({ data: null, error: null }),
     supabase.from('payments').select('method, amount_chf, status').eq('trade_id', trade.id).abortSignal(signal).maybeSingle<Payment>(),
+    supabase.from('trade_addresses').select('street, zip, city').eq('trade_id', trade.id).abortSignal(signal).maybeSingle<{ street: string; zip: string; city: string }>(),
     trade.status === 'abgeschlossen'
       ? supabase.from('ratings').select('id').eq('trade_id', trade.id).eq('author_id', trade.client_id).abortSignal(signal).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
   ])
   if (helper.error || payment.error || rating.error) throw new Error('Agreement lookup failed')
-  return { helper: helper.data, payment: payment.data, rated: Boolean(rating.data) }
+  return { helper: helper.data, payment: payment.data, rated: Boolean(rating.data), address: address.data }
 }
 
 export function TradeLifecycle({ trade, refresh }: { trade: Trade; refresh: () => void }) {
@@ -142,7 +144,7 @@ export function TradeLifecycle({ trade, refresh }: { trade: Trade; refresh: () =
   )
   if (!agreement) return <p className="text-body" role="status">Vereinbarung wird geladen …</p>
 
-  const { helper, payment, rated } = agreement
+  const { helper, payment, rated, address } = agreement
   const name = helper?.display_name || 'Helfende Person'
   const price = payment ? 'CHF ' + francs.format(payment.amount_chf) : null
   const cash = payment?.method === 'bar'
@@ -157,7 +159,7 @@ export function TradeLifecycle({ trade, refresh }: { trade: Trade; refresh: () =
   const canReport = reportedAt === null || Date.parse(zurichDay(now) + 'T00:00:00Z') <= reportDeadline(reportedAt)
   const freeUntil = trade.scheduled_at ? Date.parse(trade.scheduled_at) - 48 * 60 * 60 * 1000 : null
   const appointment = trade.scheduled_at ? dateTime.format(new Date(trade.scheduled_at)) : 'Termin noch offen'
-  const location = trade.is_remote ? 'Überall' : trade.location
+  const location = trade.is_remote ? 'Remote' : address ? `${address.street}, ${address.zip} ${address.city}` : trade.location
   const avatar = (className: string) => helper?.avatar_url
     ? <img className={className} src={helper.avatar_url} alt="" />
     : <span className={className} aria-hidden>{name.trim().split(/\s+/).slice(0, 2).map((word) => word[0]).join('').toUpperCase()}</span>
@@ -166,19 +168,17 @@ export function TradeLifecycle({ trade, refresh }: { trade: Trade; refresh: () =
   return (
     <>
       {done ? (
-        <div className="trade-lifecycle__done">
-          {avatar('checkout__avatar trade-lifecycle__done-avatar')}
-          <h2 className="text-h2">Trade abgeschlossen</h2>
-          <p className="text-body text-secondary">
-            {cash ? 'Die vereinbarte Zahlung erfolgt bar vor Ort.' : price && payment?.status === 'freigegeben'
-              ? `${price} wurden für ${name} freigegeben.` : 'Danke fürs Vertrauen!'}
-          </p>
-          {rated && <p className="text-label">Bewertung abgegeben</p>}
-        </div>
+        <Zustand
+          mascot="pip"
+          title="Trade abgeschlossen"
+          text={`${trade.title} · ${cash ? `${price ?? ''} bar bezahlt` : price && payment?.status === 'freigegeben' ? `${price} an ${name} freigegeben` : 'danke fürs Vertrauen'}`}
+        >
+          {rated && <p className="text-label text-secondary">Deine Bewertung ist abgegeben · danke!</p>}
+        </Zustand>
       ) : (
         <>
           {!reviewing && <p className="trade-detail__online text-label">
-            <CircleCheck aria-hidden />{cash ? 'Buchung bestätigt · bar vor Ort'
+            <CircleCheck aria-hidden />{cash ? 'Vereinbarung bestätigt · bar vor Ort'
               : held && price ? `Bezahlt – ${price} sind sicher hinterlegt` : 'Vereinbarung bestätigt'}
           </p>}
           {reviewing && reminder ? (
@@ -222,6 +222,11 @@ export function TradeLifecycle({ trade, refresh }: { trade: Trade; refresh: () =
           )}
         </>
       )}
+      {canReport && !reviewing && (
+        <button className="checkout__link trade-lifecycle__link-button trade-lifecycle__report text-label" type="button" onClick={() => open('report')}>
+          Problem melden
+        </button>
+      )}
       <div className="checkout__actions">
         {!reviewing && !done && freeUntil !== null && now <= freeUntil &&
           <p className="text-caption text-secondary">Gratis stornierbar bis {dateTime.format(freeUntil)}</p>}
@@ -229,8 +234,8 @@ export function TradeLifecycle({ trade, refresh }: { trade: Trade; refresh: () =
         {done && !rated && <Link className="button button--primary text-body-strong trade-lifecycle__primary" to={`/trades/${trade.id}/bewerten`}>Bewertung abgeben</Link>}
         {!reviewing && !done && chat && <Link className="button button--primary text-body-strong trade-lifecycle__primary" to={chat}>Chat mit {name}</Link>}
         {!reviewing && !done && <button className="checkout__link trade-lifecycle__link-button text-label" type="button" onClick={() => open('cancel')}>Trade stornieren</button>}
-        {canReport && <button className="checkout__link trade-lifecycle__link-button text-label" type="button" onClick={() => open('report')}>Problem melden</button>}
-        {done && <Link className="checkout__link text-label" to="/trades">{rated ? 'Zu meinen Trades' : 'Später'}</Link>}
+        {reviewing && canReport && <button className="checkout__link trade-lifecycle__link-button text-label" type="button" onClick={() => open('report')}>Problem melden</button>}
+        {done && <Link className={rated ? 'button button--primary text-body-strong trade-lifecycle__primary' : 'checkout__link text-label'} to="/trades">{rated ? 'Zu meinen Trades' : 'Später'}</Link>}
       </div>
       <dialog ref={dialog} className="checkout__sheet" aria-labelledby="lifecycle-title"
         onCancel={(event) => { if (pending.current) event.preventDefault() }}>
