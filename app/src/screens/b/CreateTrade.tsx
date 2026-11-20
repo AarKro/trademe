@@ -1,6 +1,8 @@
-import { Camera, CircleAlert, Plus, Clock } from 'lucide-react'
+import { Camera, CircleAlert, Plus, Clock, CalendarDays } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Segmented } from '../../components/Segmented'
+import { Zustand } from '../../components/Zustand'
 import { ActionBar } from '../../components/ActionBar'
 import { AppBar } from '../../components/AppBar'
 import { BottomSheet } from '../../components/BottomSheet'
@@ -113,7 +115,6 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
   const [addressPending, setAddressPending] = useState(false)
   const [errors, setErrors] = useState<Errors>({})
   const [message, setMessage] = useState('')
-  const [published, setPublished] = useState(false)
   const [busy, setBusy] = useState(false)
   const submitting = useRef(false)
   const form = useRef<HTMLFormElement>(null)
@@ -140,13 +141,12 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
       navigate('/trades/' + initialTrade.id, { replace: true })
       return
     }
-    setPublished(true)
-    setMessage('Dein Trade ist veröffentlicht.')
+    navigate('/erstellen/veroeffentlicht', { replace: true, state: { published: true } })
   }
 
   async function publish(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (submitting.current || published || !session) return
+    if (submitting.current || !session) return
 
     if (pendingAddress.current) {
       submitting.current = true
@@ -326,7 +326,7 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
     <main className="screen screen--with-action-bar">
       <AppBar back={editing} title={editing ? "Trade bearbeiten" : "Trade erstellen"} />
       <form ref={form} className="create-trade" onSubmit={publish} noValidate>
-        <fieldset className="create-trade__fields" aria-label={editing ? "Trade bearbeiten" : "Trade erstellen"} disabled={busy || published || addressPending}>
+        <fieldset className="create-trade__fields" aria-label={editing ? "Trade bearbeiten" : "Trade erstellen"} disabled={busy || addressPending}>
           {errorCount > 0 && (
             <div className="create-trade__banner" role="alert">
               <CircleAlert aria-hidden />
@@ -345,28 +345,36 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
           <Field id="title" label="Was brauchst du? *" error={errors.title}>
             <input {...fieldProps('title', errors)} required defaultValue={initialTrade?.title} placeholder="Z. B. Deckenlampe im Wohnzimmer montieren" />
           </Field>
-          <div className="field">
-            <label className="text-label" htmlFor="wanted-mode">Wann soll die Hilfe stattfinden?</label>
-            <select className="input text-body" id="wanted-mode" value={span ? 'span' : 'from'} onChange={(event) => setSpan(event.target.value === 'span')}>
-              <option value="from">Ab Zeitpunkt</option>
-              <option value="span">Zeitspanne von–bis</option>
-            </select>
-            <Field id="when" label={span ? "Von *" : "Datum *"} error={errors.when}>
-              <input {...fieldProps('when', errors)} type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} required />
-            </Field>
-            <div className="field">
-              <Button id="start-time" type="button" variant="secondary" aria-describedby={errors['start-time'] ? 'start-time-error' : undefined} onClick={() => setTimeField('when')}>
-                <Clock aria-hidden /> {fromTime ? 'Von ' + fromTime + ' Uhr' : span ? 'Startzeit hinzufügen (optional)' : 'Uhrzeit wählen *'}
-              </Button>
+          <section className="create-trade__schedule" aria-labelledby="trade-schedule-title">
+            <h2 className="text-body-strong" id="trade-schedule-title">Wann soll die Hilfe stattfinden?</h2>
+            <Segmented label="Terminart" value={span ? 'span' : 'from'}
+              options={[{ value: 'from', label: 'Ab Zeitpunkt' }, { value: 'span', label: 'Zeitspanne' }]}
+              onChange={(value) => setSpan(value === 'span')} />
+            <div className="create-trade__date-card">
+              <Field id="when" label={span ? 'Startdatum *' : 'Datum *'} error={errors.when}>
+                <div className="create-trade__date-input">
+                  <CalendarDays aria-hidden />
+                  <input {...fieldProps('when', errors)} type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} required />
+                </div>
+              </Field>
+              <button className="create-trade__time-button text-label" id="start-time" type="button" aria-haspopup="dialog"
+                aria-describedby={errors['start-time'] ? 'start-time-error' : undefined} onClick={() => setTimeField('when')}>
+                <Clock aria-hidden /> {fromTime ? fromTime + ' Uhr' : span ? 'Uhrzeit hinzufügen (optional)' : 'Uhrzeit wählen *'}
+              </button>
               {errors['start-time'] && <p className="create-trade__error text-body" id="start-time-error">{errors['start-time']}</p>}
             </div>
-            {span && <Field id="until" label="Bis *" error={errors.until}>
-              <input {...fieldProps('until', errors)} type="date" value={untilDate} onChange={(event) => setUntilDate(event.target.value)} required />
-              <Button type="button" variant="secondary" onClick={() => setTimeField('until')}>
-                <Clock aria-hidden /> {untilTime ? 'Bis ' + untilTime + ' Uhr' : 'Endzeit hinzufügen (optional)'}
-              </Button>
-            </Field>}
-          </div>
+            {span && <div className="create-trade__date-card">
+              <Field id="until" label="Enddatum *" error={errors.until}>
+                <div className="create-trade__date-input">
+                  <CalendarDays aria-hidden />
+                  <input {...fieldProps('until', errors)} type="date" value={untilDate} onChange={(event) => setUntilDate(event.target.value)} required />
+                </div>
+              </Field>
+              <button className="create-trade__time-button text-label" type="button" aria-haspopup="dialog" onClick={() => setTimeField('until')}>
+                <Clock aria-hidden /> {untilTime ? untilTime + ' Uhr' : 'Uhrzeit hinzufügen (optional)'}
+              </button>
+            </div>}
+          </section>
           <div className="field">
             <div className="create-trade__location-options text-body">
               <label><input type="checkbox" checked={remote} onChange={(event) => {
@@ -452,30 +460,14 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
               <input {...fieldProps('photos', errors)} type="file" accept="image/jpeg,image/png,image/webp" multiple />
             </Field>
           </details>
-          {message && <p className="text-body" role={published ? 'status' : 'alert'}>{message}</p>}
+          {message && <p className="text-body" role="alert">{message}</p>}
         </fieldset>
         <ActionBar>
-          {published
-            ? <Button type="button" onClick={() => {
-              form.current?.reset()
-              setRemote(false)
-              setSpan(false)
-              setFromDate('')
-              setUntilDate('')
-              setFromTime('')
-              setUntilTime('')
-              setTags([])
-              setTag('')
-              setCategory(categories[0])
-              setMore(false)
-              setMessage('')
-              setPublished(false)
-            }}>Weiteren Trade erstellen</Button>
-            : <Button type="submit" disabled={busy}>{busy ? 'Wird gespeichert …' : addressPending ? 'Adresse erneut speichern' : editing ? 'Änderungen speichern' : 'Trade veröffentlichen'}</Button>}
+          <Button type="submit" disabled={busy}>{busy ? 'Wird gespeichert …' : addressPending ? 'Adresse erneut speichern' : editing ? 'Änderungen speichern' : 'Trade veröffentlichen'}</Button>
         </ActionBar>
       </form>
       <BottomSheet open={timeField !== null} title={timeField === 'when' ? (span ? 'Startzeit (optional)' : 'Uhrzeit wählen') : 'Endzeit (optional)'} onClose={() => setTimeField(null)}>
-        <label className="field text-label">
+        <label className="field text-label create-trade__time-field">
           Uhrzeit
           <input className="input text-body" type="time" ref={timeInput} defaultValue={timeField === 'when' ? fromTime : untilTime} />
         </label>
@@ -483,5 +475,22 @@ export function CreateTrade({ initialTrade, address }: { initialTrade?: Trade; a
         {span && <Button type="button" variant="text" onClick={() => saveTime('')}>Ohne Uhrzeit</Button>}
       </BottomSheet>
     </main>
+  )
+}
+
+export function TradePublished() {
+  const { state } = useLocation()
+  if (!state?.published) return <Navigate to="/erstellen" replace />
+
+  return (
+    <>
+      <AppBar title="Trade veröffentlicht" />
+      <main className="screen screen--with-action-bar trade-published">
+        <Zustand mascot="plaudi" title="Dein Trade wurde veröffentlicht!" text="Jetzt können Helfende deinen Trade entdecken und dir Angebote schicken." />
+        <ActionBar>
+          <Link className="button button--primary text-body-strong" to="/erstellen" replace>Weiteren Trade veröffentlichen</Link>
+        </ActionBar>
+      </main>
+    </>
   )
 }
