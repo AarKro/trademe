@@ -88,7 +88,7 @@ Priorität: **P1** = Lücke im Ablauf, **P2** = unklar/schlecht sichtbar, **P3**
   - Jede Zeile zeigt **Name + Avatar der Person** und darunter den Trade-Titel.
   - Bereich «Abgeschlossen» (eingeklappt) für Chats zu Trades mit Status `abgeschlossen` / `storniert`.
   - Ungelesen-Punkt kommt mit A-2. Bis dahin reicht Sortierung nach letzter Nachricht.
-- [ ] **C-2 (P2) Auftrag-Detail ergänzen** 🟢
+- [x] **C-2 (P2) Auftrag-Detail ergänzen** (A-1 gemerged)
   - Nach dem Senden eines Angebots erklären, wie es weitergeht: kleine Status-Timeline / 3 Schritte («Person prüft dein Angebot → Du wirst benachrichtigt → Bei Annahme siehst du Adresse und Termin»).
   - Button «Chatten» mit der auftraggebenden Person (ab Angebot gesendet).
   - C/09: Button «Bewertung abgeben» → `/trades/:id/bewerten` (A/14).
