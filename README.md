@@ -88,6 +88,12 @@ The full mapping of every V4 frame is in `app/src/screens/registry.ts`.
 | Release | `supabase.rpc('release_trade', { p_trade_id })` | B/08 |
 | Report a problem | `supabase.rpc('report_problem', { p_trade_id, p_reason, p_details })` | B/15 |
 | Cancel | `supabase.rpc('cancel_trade', { p_trade_id })` → returns 0 or 20 (% fee) | – |
+| Delete an open trade | `supabase.rpc('delete_trade', { p_trade_id })` (only while `offen`, afterwards only cancel) | B/03 |
+| Decline one offer | `supabase.rpc('decline_offer', { p_offer_id })` | B/03b |
+
+- Editing an open trade: normal `update` on `trades`. Status, client, helper and the flow dates can't be changed that way (the database refuses).
+- Address: `trade_addresses` (street, zip, city). The client reads/writes it; the helper can read it only after payment (TWINT/card held) or when cash was chosen. `trades.location` is only the rough area for map and list.
+- Notifications are created by the database itself (offer, status change, chat message, rating). Read them from `notifications`; `link` is the app route to open.
 
 - Making an offer: `insert into offers`. Chat: `insert into messages` + subscribe via `supabase.channel(…).on('postgres_changes', …)`.
 - Photos: Storage bucket `photos`, path `<user-id>/<filename>`.
