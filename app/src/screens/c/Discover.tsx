@@ -9,9 +9,17 @@ import { Zustand } from '../../components/Zustand'
 import { useAuth } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
 import type { Trade } from '../../lib/types'
+import L from 'leaflet'
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
+import markerIcon from 'leaflet/dist/images/marker-icon.png'
+import markerShadow from 'leaflet/dist/images/marker-shadow.png'
 import 'leaflet/dist/leaflet.css'
 import './Discover.css'
 import { formatWanted } from '../../lib/format'
+
+// Leaflet looks for its pin images next to its CSS, which breaks in the production build
+// (pins showed as broken «Marker» images on Vercel). Point it at the bundled files instead.
+L.Icon.Default.mergeOptions({ iconUrl: markerIcon, iconRetinaUrl: markerIcon2x, shadowUrl: markerShadow })
 
 const zurich: [number, number] = [47.3769, 8.5417]
 type Coordinates = { lat: number; lng: number }
