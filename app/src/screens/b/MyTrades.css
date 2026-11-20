@@ -87,8 +87,7 @@
   line-height: var(--font-line-height-caption);
 }
 
-.my-trades__chevron,
-.my-trades__photo svg {
+.my-trades__chevron {
   flex-shrink: 0;
   width: var(--size-icon-md);
   height: var(--size-icon-md);

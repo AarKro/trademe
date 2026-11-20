@@ -1,7 +1,8 @@
-import { Calendar, CircleCheck, Image as ImageIcon, Lock, MapPin, TriangleAlert, Wallet, X } from 'lucide-react'
+import { Calendar, CircleCheck, Lock, MapPin, TriangleAlert, Wallet, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { TradePhoto } from '../../components/TradePhoto'
 import { Button } from '../../components/Button'
 import { StatusBadge } from '../../components/StatusBadge'
 import { supabase } from '../../lib/supabase'
@@ -189,8 +190,7 @@ export function TradeLifecycle({ trade, refresh }: { trade: Trade; refresh: () =
             </div>
           ) : (
             <div className="checkout__summary">
-              {trade.photo_urls[0] ? <img className="checkout__photo" src={trade.photo_urls[0]} alt="" />
-                : <span className="checkout__photo"><ImageIcon aria-hidden /></span>}
+              <TradePhoto className="checkout__photo" src={trade.photo_urls[0]} />
               <div><h2 className="text-h3">{trade.title}</h2>
                 {reviewing && <p className="text-caption text-secondary">{[name, appointment, price].filter(Boolean).join(' · ')}</p>}</div>
             </div>

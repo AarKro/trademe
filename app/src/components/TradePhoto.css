@@ -1,0 +1,5 @@
+.trade-photo.trade-photo--mascot {
+  object-fit: scale-down;
+  padding: var(--space-inset-xs);
+  background: var(--color-surface-accent-subtle);
+}

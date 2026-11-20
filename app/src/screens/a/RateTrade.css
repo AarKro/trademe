@@ -13,14 +13,6 @@
   object-fit: cover;
 }
 
-.rate__image--empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-surface-muted);
-  color: var(--color-icon-subtle);
-}
-
 .rate__hero-text {
   flex: 1;
   min-width: 0;

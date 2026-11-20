@@ -19,6 +19,4 @@
 .leaflet-control-attribution { font-size: var(--font-size-caption); }
 
 /* no photo → small icon instead of a big grey box (UX review #51) */
-.discover-card__icon { display: grid; flex: none; place-items: center; width: var(--size-avatar-md); height: var(--size-avatar-md); border-radius: var(--radius-control); color: var(--color-icon-subtle); background: var(--color-surface-subtle); }
-.discover-card__icon svg { width: var(--size-icon-md); height: var(--size-icon-md); }
 .discover-card { color: var(--color-text-primary); text-decoration: none; }

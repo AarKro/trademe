@@ -1,7 +1,7 @@
-import { ImageOff } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ActionBar } from '../../components/ActionBar'
+import { TradePhoto } from '../../components/TradePhoto'
 import { AppBar } from '../../components/AppBar'
 import { Button } from '../../components/Button'
 import { Rating } from '../../components/Rating'
@@ -166,13 +166,7 @@ function RatingForm({
       <AppBar title="Bewertung" back />
       <main className="screen profile screen--with-action-bar">
         <div className="rate__hero">
-          {trade.photo_urls[0] ? (
-            <img className="rate__image" src={trade.photo_urls[0]} alt="" />
-          ) : (
-            <span className="rate__image rate__image--empty" aria-hidden>
-              <ImageOff />
-            </span>
-          )}
+          <TradePhoto className="rate__image" src={trade.photo_urls[0]} />
           <div className="rate__hero-text">
             <h2 className="text-h3">{trade.title}</h2>
             <p className="text-caption text-secondary">{subtitle}</p>

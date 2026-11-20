@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
 import { Link } from 'react-router-dom'
-import { Globe, MapPin, Navigation, RefreshCw, SlidersHorizontal, X } from 'lucide-react'
+import { Globe, Navigation, RefreshCw, SlidersHorizontal, X } from 'lucide-react'
+import { TradePhoto } from '../../components/TradePhoto'
 import { AppBar } from '../../components/AppBar'
 import { BottomSheet } from '../../components/BottomSheet'
 import { Button } from '../../components/Button'
@@ -52,11 +53,7 @@ function formatLocation(trade: Trade) {
 function TradeCard({ trade }: { trade: Trade }) {
   return (
     <Link className="discover-card" to={`/auftraege/${trade.id}`}>
-      {trade.photo_urls[0] ? (
-        <div className="discover-card__image" aria-hidden="true"><img src={trade.photo_urls[0]} alt="" /></div>
-      ) : (
-        <div className="discover-card__icon" aria-hidden="true">{trade.is_remote ? <Globe /> : <MapPin />}</div>
-      )}
+      <div className="discover-card__image"><TradePhoto src={trade.photo_urls[0]} loading="lazy" /></div>
       <div className="discover-card__content">
         <h2 className="text-h3">{trade.title}</h2>
         <p className="text-caption text-secondary">{formatLocation(trade)} · {formatTradeDate(trade)}</p>

@@ -1,6 +1,7 @@
-import { ChevronRight, Image as ImageIcon } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { TradePhoto } from '../../components/TradePhoto'
 import { AppBar } from '../../components/AppBar'
 import { Button } from '../../components/Button'
 import { Segmented } from '../../components/Segmented'
@@ -180,9 +181,7 @@ export function MyTrades() {
                 {rows.map(({ id, title, photo, badge, meta, next, href }) => (
                   <li key={id}>
                     <Link className="my-trades__row" to={href}>
-                      {photo
-                        ? <img className="my-trades__photo" src={photo} alt="" loading="lazy" />
-                        : <span className="my-trades__photo"><ImageIcon aria-hidden /></span>}
+                      <TradePhoto className="my-trades__photo" src={photo} loading="lazy" />
                       <div className="my-trades__copy">
                         {badge}
                         <h3 className="text-body-strong">{title}</h3>
