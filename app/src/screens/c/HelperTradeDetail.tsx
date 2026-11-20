@@ -7,6 +7,7 @@ import { useAuth } from '../../lib/auth'
 import { supabase } from '../../lib/supabase'
 import type { Profile, Trade, TradeAddress } from '../../lib/types'
 import './HelperTradeDetail.css'
+import { formatWanted } from '../../lib/format'
 
 const currency = new Intl.NumberFormat('de-CH', { maximumFractionDigits: 2 })
 const payoutCurrency = new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -18,13 +19,9 @@ function formatDate(value: string | null) {
 }
 
 function formatTradeDate(trade: Trade) {
-  if (trade.status !== 'offen' || !trade.wanted_from) return formatDate(trade.scheduled_at)
-  const from = new Date(trade.wanted_from)
-  const until = trade.wanted_until ? new Date(trade.wanted_until) : null
-  const date = new Intl.DateTimeFormat('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit' }).format(from)
-  const time = new Intl.DateTimeFormat('de-CH', { hour: '2-digit', minute: '2-digit' }).format(from)
-  if (!until) return `ab ${date}, ${time}`
-  return `${date}–${new Intl.DateTimeFormat('de-CH', { day: '2-digit', month: '2-digit' }).format(until)}`
+  // open: when the client wants it (B/01) · later: the agreed appointment
+  if ((trade.status === 'offen' || !trade.scheduled_at) && trade.wanted_from) return `Gewünscht: ${formatWanted(trade.wanted_from, trade.wanted_until)}`
+  return `Termin: ${formatDate(trade.scheduled_at)}`
 }
 
 function initials(name: string) {
@@ -136,6 +133,7 @@ function HelperTradeDetailContent({ tradeId, helperId, onAsk }: { tradeId: strin
           <p><MapPin size={20} aria-hidden /><span>{trade.is_remote ? 'Überall · Remote' : trade.location ?? 'Ort offen'}</span></p>
           <p><Wallet size={20} aria-hidden /><span>Budget CHF {currency.format(trade.budget_chf)}</span></p>
         </div>
+        {trade.tags.length > 0 && <ul className="helper-detail__tags" aria-label="Stichwörter">{trade.tags.map((tag) => <li key={tag} className="text-caption">{tag}</li>)}</ul>}
         {!trade.is_remote && trade.status !== 'offen' && (address ? <div className="helper-detail__state helper-detail__state--address"><strong className="text-label">Adresse</strong><span className="text-body">{address.street}<br />{address.zip} {address.city}</span><a className="helper-detail__map-link text-label" href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(`${address.street}, ${address.zip} ${address.city}`)}`} target="_blank" rel="noreferrer"><ExternalLink size={16} aria-hidden /> In Karte öffnen</a></div> : <div className="helper-detail__state"><strong className="text-label">Adresse noch nicht verfügbar</strong><span className="text-caption text-secondary">{paymentMethod === 'bar' ? 'Die Adresse wurde noch nicht erfasst. Frag im Chat nach.' : 'Die genaue Adresse siehst du, sobald die Zahlung hinterlegt ist.'}</span></div>)}
         {trade.description && <p className="text-body text-secondary">{trade.description}</p>}
         <Link className="helper-detail__client" to={`/profil/${trade.client_id}`}>
